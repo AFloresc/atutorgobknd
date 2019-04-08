@@ -50,33 +50,60 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/books", getBooks).Methods("GET")
-	router.HandleFunc("/books/{id}", getBook).Methods("GET")
-	router.HandleFunc("/books", addBook).Methods("POST")
-	router.HandleFunc("/books", updateBook).Methods("PUT")
-	router.HandleFunc("/books/{id}", removeBook).Methods("DELETE")
+	//Signup handlers
+	router.HandleFunc("/signup", signup).Methods("POST")
+	//Signin handers
+	router.HandleFunc("/login", login).Methods("POST")
+	//token protected routes
+	router.HandleFunc("/protected", TokenVerifyMiddleWare(protectedEndpoint)).Methods("GET")
+
+	// router.HandleFunc("/books", getBooks).Methods("GET")
+	// router.HandleFunc("/books/{id}", getBook).Methods("GET")
+	// router.HandleFunc("/books", addBook).Methods("POST")
+	// router.HandleFunc("/books", updateBook).Methods("PUT")
+	// router.HandleFunc("/books/{id}", removeBook).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
 
-func getBooks(w http.ResponseWriter, r *http.Request) {
-	log.Println("Get all books is called.")
-}
-func getBook(w http.ResponseWriter, r *http.Request) {
-	log.Println("Get book is called.")
+func signup(w http.ResponseWriter, r *http.Request) {
+	log.Println("signup invoked.")
+
 }
 
-func addBook(w http.ResponseWriter, r *http.Request) {
-	log.Println("Add book is called.")
+func login(w http.ResponseWriter, r *http.Request) {
+	log.Println("login invoked.")
+
 }
 
-func updateBook(w http.ResponseWriter, r *http.Request) {
-	log.Println("Update book is called.")
+func protectedEndpoint(w http.ResponseWriter, r *http.Request) {
+	log.Println("protectedEndpoints invoked.")
+
 }
 
-func removeBook(w http.ResponseWriter, r *http.Request) {
-	log.Println("Remove book is called.")
+func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
+	log.Println("TokenVerifyMiddleWare invoked.")
+	return nil
 }
+
+// func getBooks(w http.ResponseWriter, r *http.Request) {
+// 	log.Println("Get all books is called.")
+// }
+// func getBook(w http.ResponseWriter, r *http.Request) {
+// 	log.Println("Get book is called.")
+// }
+
+// func addBook(w http.ResponseWriter, r *http.Request) {
+// 	log.Println("Add book is called.")
+// }
+
+// func updateBook(w http.ResponseWriter, r *http.Request) {
+// 	log.Println("Update book is called.")
+// }
+
+// func removeBook(w http.ResponseWriter, r *http.Request) {
+// 	log.Println("Remove book is called.")
+// }
 
 // Initialize : load data from json file
 func (a *Application) Initialize(filename string) {
@@ -114,10 +141,6 @@ func loadConfiguration(filename string) (Config, error) {
 	jsonParser := json.NewDecoder(configFile)
 	err = jsonParser.Decode(&config)
 	return config, err
-}
-
-func (a *Application) AutoMigrate() error {
-	return a.db2.AutoMigrate(&Book{})
 }
 
 // func timer(d time.Duration) <-chan int {
