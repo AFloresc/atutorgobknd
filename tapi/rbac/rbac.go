@@ -7,18 +7,17 @@ import (
 	"github.com/atutor/domain"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/websays-intelligence/profiles"
 )
 
 // AccessController helps controlling access to the services
 type AccessController struct {
-	profiles domain.User
+	user domain.UserClient
 }
 
 // NewAccessController initializes a new access controller
-func NewAccessController(profiles profiles.UserProfilesClient) *AccessController {
+func NewAccessController(user domain.UserClient) *AccessController {
 	return &AccessController{
-		profiles: profiles,
+		user: user,
 	}
 }
 
