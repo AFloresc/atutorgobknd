@@ -8,6 +8,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/dgrijalva/jwt-go"
+
+	"github.com/atutor/domain"
+	"github.com/atutor/tapi/rbac"
+
 	"github.com/atutor/ahttp"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -51,12 +56,6 @@ func main() {
 	//token protected routes
 	router.HandleFunc("/protected", TokenVerifyMiddleWare(protectedEndpoint)).Methods("GET")
 
-	// router.HandleFunc("/books", getBooks).Methods("GET")
-	// router.HandleFunc("/books/{id}", getBook).Methods("GET")
-	// router.HandleFunc("/books", addBook).Methods("POST")
-	// router.HandleFunc("/books", updateBook).Methods("PUT")
-	// router.HandleFunc("/books/{id}", removeBook).Methods("DELETE")
-
 	log.Println("Listening on port 8000...")
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
@@ -68,8 +67,18 @@ func signup(w http.ResponseWriter, r *http.Request) {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
+	user := domain.User{}
 
-	ahttp.RespondWithJSON(w, http.StatusOK, "succesfully called login.")
+	json.NewDecoder(r.Body).Decode(&user)
+
+	token, err := GenerateToken(user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Token: ", token)
+
+	//ahttp.RespondWithJSON(w, http.StatusOK, "succesfully called login.")
 
 }
 
@@ -121,4 +130,24 @@ func loadConfiguration(filename string) (Config, error) {
 	jsonParser := json.NewDecoder(configFile)
 	err = jsonParser.Decode(&config)
 	return config, err
+}
+
+// GenerateToken : Generates a valid token
+func GenerateToken(user domain.User) (string, error) {
+	var err error
+	secret := "If I kill you, I am bound for hell. It is a price I shall gladly pay."
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email": user.Email,
+		"iss":   "ATutorCourse",
+		"role":  rbac.RoleLogin,
+	})
+
+	tokenString, err := token.SignedString([]byte(secret))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return tokenString, nil
 }
