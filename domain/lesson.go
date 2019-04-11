@@ -27,6 +27,7 @@ func (Lesson) TableName() string {
 // LessonClient : defines the interface to access Lesson data
 type LessonClient interface {
 	GetLesson(ctx context.Context, lessonID int64) (lesson *Lesson, err error)
+	GetAllLessonsByCourseID(ctx context.Context, lessonID int64) (lesson []Lesson, err error)
 	CreateLesson(ctx context.Context, lesson *Lesson) error
 	UpdateLesson(ctx context.Context, lesson *Lesson) error
 	DeleteLesson(ctx context.Context, lessonID int64) error
@@ -53,6 +54,11 @@ func (c Client) DeleteLesson(ctx context.Context, lessonID int64) error {
 	return nil
 }
 func (c Client) GetAllSublessonsByCourse(ctx context.Context, courseid int64) ([]Lesson, error) {
+	//TODO
+	return nil, nil
+}
+
+func (c Client) GetAllLessonsByCourseID(ctx context.Context, lessonID int64) (lesson []Lesson, err error) {
 	//TODO
 	return nil, nil
 }
