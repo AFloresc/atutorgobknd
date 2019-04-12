@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 
@@ -17,6 +19,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Application struct
@@ -24,6 +27,7 @@ type Application struct {
 	db     *sql.DB
 	db2    *gorm.DB
 	Config Config
+	Client *domain.Client
 }
 
 // Config struct
@@ -37,27 +41,37 @@ type Config struct {
 	} `json:"database"`
 }
 
-//var books []Book
+type JWT struct {
+	Token string `json:"token"`
+}
 
 func main() {
-	//app := Application{}
+	app := Application{
+		Client: &domain.Client{},
+	}
 
-	//client := MyClient{}
-	//app.Initialize("config.json")
+	//app.Client = domain.Client{}
 
-	// ctx := context.Background()
+	app.Initialize("config.json")
+	err := app.Client.AutoMigrate()
+	if err != nil {
+		log.Fatal(err)
+	}
+	//ctx := context.Background()
 
 	router := mux.NewRouter()
+	app.InitializeRoutes(router)
+	log.Println("Listening on port 8000...")
+	log.Fatal(http.ListenAndServe(":8000", router))
+}
 
+func (a *Application) InitializeRoutes(router *mux.Router) {
 	//Signup handlers
 	router.HandleFunc("/signup", signup).Methods("POST")
 	//Signin handers
-	router.HandleFunc("/login", login).Methods("POST")
+	router.HandleFunc("/login", a.login).Methods("POST")
 	//token protected routes
 	router.HandleFunc("/protected", TokenVerifyMiddleWare(protectedEndpoint)).Methods("GET")
-
-	log.Println("Listening on port 8000...")
-	log.Fatal(http.ListenAndServe(":8000", router))
 }
 
 func signup(w http.ResponseWriter, r *http.Request) {
@@ -66,20 +80,66 @@ func signup(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
-	user := domain.User{}
+func (ap Application) login(w http.ResponseWriter, r *http.Request) {
+	var user domain.User
+	var jwt JWT
+	var error ahttp.Error
+	decoder := json.NewDecoder(r.Body)
 
-	json.NewDecoder(r.Body).Decode(&user)
+	if err := decoder.Decode(&user); err != nil {
+		error.Message = "Invalid payload"
+		ahttp.RespondWithError(w, http.StatusBadRequest, error)
+		return
+	}
+
+	if user.Email == "" {
+		error.Message = "Email is missing"
+		ahttp.RespondWithError(w, http.StatusBadRequest, error)
+		return
+	}
+
+	if user.Password == "" {
+		error.Message = "Password is missing"
+		ahttp.RespondWithError(w, http.StatusBadRequest, error)
+		return
+	}
+
+	//spew.Dump(user)
+	password := user.Password
+
+	user, err := ap.Client.GetUserByEmail(context.Background(), user.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			error.Message = "The user does not exist"
+			ahttp.RespondWithError(w, http.StatusBadRequest, error)
+			return
+		} else {
+			if strings.Contains(err.Error(), "record not found") {
+				error.Message = "The user does not exist"
+				ahttp.RespondWithError(w, http.StatusBadRequest, error)
+			} else {
+				log.Fatal(err)
+			}
+
+		}
+	}
+
+	//spew.Dump(u)
+	hashedPasword := user.Password
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPasword), []byte(password))
+	if err != nil {
+		error.Message = "Invalid Password"
+		ahttp.RespondWithError(w, http.StatusBadRequest, error)
+	}
 
 	token, err := GenerateToken(user)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error generating token->", err.Error)
 	}
 
-	fmt.Println("Token: ", token)
+	jwt.Token = token
 
-	//ahttp.RespondWithJSON(w, http.StatusOK, "succesfully called login.")
-
+	ahttp.RespondWithJSON(w, http.StatusOK, jwt)
 }
 
 func protectedEndpoint(w http.ResponseWriter, r *http.Request) {
@@ -104,20 +164,7 @@ func (a *Application) Initialize(filename string) {
 	println("loadconfig IP: ", config.Database.IP)
 	println("loadconfig PORT: ", config.Database.Port)
 	println("loadconfig NAME: ", config.Database.Name)
-	a.initialize(config.Database.User, config.Database.Pass, config.Database.IP, config.Database.Port, config.Database.Name)
-}
-
-// Initialize : Initialize the database
-func (a *Application) initialize(user string, password string, ip string, port int, dbname string) {
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", user, password, ip, port, dbname)
-	println("Connection: ", connectionString)
-	var err error
-	a.db2, err = gorm.Open("mysql", connectionString)
-	if err != nil {
-		log.Fatal(err)
-	} else {
-		fmt.Println("Connection Established.")
-	}
+	a.Client.Initialize(config.Database.User, config.Database.Pass, config.Database.IP, config.Database.Port, config.Database.Name)
 }
 
 func loadConfiguration(filename string) (Config, error) {
