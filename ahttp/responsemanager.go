@@ -5,12 +5,20 @@ import (
 	"net/http"
 )
 
+type Error struct {
+	Message string `json:"message"`
+}
+
 //COMMON METHODS:
 
 //RespondWithError : error responder in JSON format
-func RespondWithError(w http.ResponseWriter, code int, message string) {
-	RespondWithJSON(w, code, map[string]string{"error": message})
+// func RespondWithError(w http.ResponseWriter, code int, message string) {
+// 	RespondWithJSON(w, code, map[string]string{"error": message})
+// }
 
+//RespondWithError : error responder in JSON format
+func RespondWithError(w http.ResponseWriter, code int, message Error) {
+	RespondWithJSON(w, code, map[string]string{"error": message.Message})
 }
 
 //RespondWithJSON : JSON format
