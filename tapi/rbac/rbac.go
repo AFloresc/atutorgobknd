@@ -31,38 +31,38 @@ func getTokenFromContext(ctx context.Context) (token Token, err error) {
 }
 
 // CheckUserAccess Checks if the user (stored in context) has the specified role and has access to the specified profiles
-func (ac *AccessController) CheckUserAccess(ctx context.Context, role Role, profileIDs ...int64) (token Token, err error) {
-	token, err = getTokenFromContext(ctx)
-	if err != nil {
-		return
-	}
+// func (ac *AccessController) CheckUserAccess(ctx context.Context, role Role, profileIDs ...int64) (token Token, err error) {
+// 	token, err = getTokenFromContext(ctx)
+// 	if err != nil {
+// 		return
+// 	}
 
-	if roleInSlice(RoleAdmin, token.Roles()) {
-		// Admin has full access to all profiles
-		return token, nil
-	}
+// 	if roleInSlice(RoleAdmin, token.Roles()) {
+// 		// Admin has full access to all profiles
+// 		return token, nil
+// 	}
 
-	if !roleInSlice(role, token.Roles()) {
-		return token, fmt.Errorf("user has no access to the profile (role)")
-	}
+// 	if !roleInSlice(role, token.Roles()) {
+// 		return token, fmt.Errorf("user has no access to the profile (role)")
+// 	}
 
-	if len(profileIDs) == 0 {
-		return token, nil
-	}
+// 	if len(profileIDs) == 0 {
+// 		return token, nil
+// 	}
 
-	profiles, err := ac.profiles.GetUserProfileIDs(ctx, token.UserID())
-	if err != nil {
-		return
-	}
-	for _, profileID := range profileIDs {
+// 	profiles, err := ac.profiles.GetUserProfileIDs(ctx, token.UserID())
+// 	if err != nil {
+// 		return
+// 	}
+// 	for _, profileID := range profileIDs {
 
-		if !int64InSlice(profileID, profiles) {
-			return token, fmt.Errorf("user has no access to the profile (profile)")
-		}
-	}
+// 		if !int64InSlice(profileID, profiles) {
+// 			return token, fmt.Errorf("user has no access to the profile (profile)")
+// 		}
+// 	}
 
-	return
-}
+// 	return
+// }
 
 func int64InSlice(a int64, list []int64) bool {
 	for _, b := range list {

@@ -1,6 +1,9 @@
 package domain
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 )
@@ -30,7 +33,8 @@ func (s *Client) AutoMigrate() error {
 	return s.db.AutoMigrate(
 		&Course{},
 		&Lesson{},
-		&Sublesson{}).Error
+		&Sublesson{},
+		&User{}).Error
 }
 
 func (s *Client) Transaction() (*Client, error) {
@@ -58,4 +62,16 @@ func (s *Client) Commit() error {
 // Close close current db connection.  If database connection is not an io.Closer, returns an error.
 func (s *Client) Close() error {
 	return s.db.Close()
+}
+
+func (s *Client) Initialize(user string, password string, ip string, port int, dbname string) {
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", user, password, ip, port, dbname)
+	// println("Connection: ", connectionString)
+	var err error
+	s.db, err = gorm.Open("mysql", connectionString)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		fmt.Println("Connection Established.")
+	}
 }

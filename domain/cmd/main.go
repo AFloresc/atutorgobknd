@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -11,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/atutor/domain"
 	"github.com/atutor/tapi/rbac"
@@ -19,7 +19,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // Application struct
@@ -65,18 +64,52 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
 
-func (a *Application) InitializeRoutes(router *mux.Router) {
+func (ap *Application) InitializeRoutes(router *mux.Router) {
 	//Signup handlers
-	router.HandleFunc("/signup", signup).Methods("POST")
+	router.HandleFunc("/signup", ap.signup).Methods("POST")
 	//Signin handers
-	router.HandleFunc("/login", a.login).Methods("POST")
+	router.HandleFunc("/login", ap.login).Methods("POST")
 	//token protected routes
 	router.HandleFunc("/protected", TokenVerifyMiddleWare(protectedEndpoint)).Methods("GET")
 }
 
-func signup(w http.ResponseWriter, r *http.Request) {
+func (ap Application) signup(w http.ResponseWriter, r *http.Request) {
+	var user domain.User
+	var error ahttp.Error
 
-	ahttp.RespondWithJSON(w, http.StatusOK, "succesfully called signup.")
+	json.NewDecoder(r.Body).Decode(&user)
+
+	if user.Email == "" {
+		error.Message = "Email is missing."
+		ahttp.RespondWithError(w, http.StatusBadRequest, error)
+		return
+	}
+
+	if user.Password == "" {
+		error.Message = "Password is missing."
+		ahttp.RespondWithError(w, http.StatusBadRequest, error)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	user.Password = string(hash)
+
+	err = ap.Client.CreateUser(r.Context(), &user)
+
+	if err != nil {
+		error.Message = "Server error."
+		ahttp.RespondWithError(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	user.Password = ""
+
+	ahttp.RespondWithJSON(w, http.StatusOK, user)
 
 }
 
@@ -105,9 +138,9 @@ func (ap Application) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//spew.Dump(user)
-	password := user.Password
+	//password := user.Password
 
-	user, err := ap.Client.GetUserByEmail(context.Background(), user.Email)
+	user, err := ap.Client.GetUserByEmail(r.Context(), user.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			error.Message = "The user does not exist"
@@ -122,19 +155,22 @@ func (ap Application) login(w http.ResponseWriter, r *http.Request) {
 			}
 
 		}
+		return
 	}
 
 	//spew.Dump(u)
-	hashedPasword := user.Password
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPasword), []byte(password))
-	if err != nil {
-		error.Message = "Invalid Password"
-		ahttp.RespondWithError(w, http.StatusBadRequest, error)
-	}
+	// hashedPasword := user.Password
+	// err = bcrypt.CompareHashAndPassword([]byte(hashedPasword), []byte(password))
+	// if err != nil {
+	// 	error.Message = "Invalid Password"
+	// 	ahttp.RespondWithError(w, http.StatusBadRequest, error)
+	// 	return
+	// }
 
 	token, err := GenerateToken(user)
 	if err != nil {
 		fmt.Println("Error generating token->", err.Error)
+		return
 	}
 
 	jwt.Token = token
@@ -143,27 +179,62 @@ func (ap Application) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func protectedEndpoint(w http.ResponseWriter, r *http.Request) {
-
+	log.Println("protectedEndpoint invoked.")
 	ahttp.RespondWithJSON(w, http.StatusOK, "succesfully called protectedEndpoints.")
 
 }
 
 func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
-	log.Println("TokenVerifyMiddleWare invoked.")
 
-	return nil
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var errorObject ahttp.Error
+		authHeader := r.Header.Get("Authorization")
+		bearerToken := strings.Split(authHeader, " ")
+		// fmt.Println(bearerToken)
+
+		if len(bearerToken) == 2 {
+			authToken := bearerToken[1]
+
+			token, error := jwt.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
+
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("There was an error")
+				}
+
+				return []byte("If I kill you, I am bound for hell. It is a price I shall gladly pay."), nil
+			})
+
+			if error != nil {
+				errorObject.Message = error.Error()
+				ahttp.RespondWithError(w, http.StatusUnauthorized, errorObject)
+				return
+			}
+			// spew.Dump(token)
+			if token.Valid {
+				next.ServeHTTP(w, r)
+			} else {
+				errorObject.Message = error.Error()
+				ahttp.RespondWithError(w, http.StatusUnauthorized, errorObject)
+				return
+			}
+		} else {
+			errorObject.Message = "Invaid token."
+			ahttp.RespondWithError(w, http.StatusUnauthorized, errorObject)
+			return
+		}
+	})
 }
 
 // Initialize : load data from json file
 func (a *Application) Initialize(filename string) {
 	fmt.Println("Starting the application...")
 	config, _ := loadConfiguration(filename)
-	fmt.Println(config.Database.IP)
-	println("loadconfig USER: ", config.Database.User)
-	println("loadconfig PASS: ", config.Database.Pass)
-	println("loadconfig IP: ", config.Database.IP)
-	println("loadconfig PORT: ", config.Database.Port)
-	println("loadconfig NAME: ", config.Database.Name)
+	// fmt.Println(config.Database.IP)
+	// println("loadconfig USER: ", config.Database.User)
+	// println("loadconfig PASS: ", config.Database.Pass)
+	// println("loadconfig IP: ", config.Database.IP)
+	// println("loadconfig PORT: ", config.Database.Port)
+	// println("loadconfig NAME: ", config.Database.Name)
 	a.Client.Initialize(config.Database.User, config.Database.Pass, config.Database.IP, config.Database.Port, config.Database.Name)
 }
 
