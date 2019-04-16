@@ -204,7 +204,7 @@ func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
 					return nil, fmt.Errorf("There was an error")
 				}
 
-				return []byte("If I kill you, I am bound for hell. It is a price I shall gladly pay."), nil
+				return []byte(os.Getenv("SECRET")), nil
 			})
 
 			if error != nil {
@@ -257,7 +257,7 @@ func loadConfiguration(filename string) (Config, error) {
 // GenerateToken : Generates a valid token
 func GenerateToken(user domain.User) (string, error) {
 	var err error
-	secret := "If I kill you, I am bound for hell. It is a price I shall gladly pay."
+	secret := os.Getenv("SECRET")
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email": user.Email,
