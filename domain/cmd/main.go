@@ -9,7 +9,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/subosito/gotenv"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/atutor/domain"
@@ -44,6 +45,10 @@ type JWT struct {
 	Token string `json:"token"`
 }
 
+func init() {
+	gotenv.Load()
+}
+
 func main() {
 	app := Application{
 		Client: &domain.Client{},
@@ -51,7 +56,7 @@ func main() {
 
 	//app.Client = domain.Client{}
 
-	app.Initialize("config.json")
+	app.Initialize(os.Getenv("MYSQL_CONNECTION"))
 	err := app.Client.AutoMigrate()
 	if err != nil {
 		log.Fatal(err)
@@ -146,14 +151,12 @@ func (ap Application) login(w http.ResponseWriter, r *http.Request) {
 			error.Message = "The user does not exist"
 			ahttp.RespondWithError(w, http.StatusBadRequest, error)
 			return
+		}
+		if strings.Contains(err.Error(), "record not found") {
+			error.Message = "The user does not exist"
+			ahttp.RespondWithError(w, http.StatusBadRequest, error)
 		} else {
-			if strings.Contains(err.Error(), "record not found") {
-				error.Message = "The user does not exist"
-				ahttp.RespondWithError(w, http.StatusBadRequest, error)
-			} else {
-				log.Fatal(err)
-			}
-
+			log.Fatal(err)
 		}
 		return
 	}
@@ -169,7 +172,7 @@ func (ap Application) login(w http.ResponseWriter, r *http.Request) {
 
 	token, err := GenerateToken(user)
 	if err != nil {
-		fmt.Println("Error generating token->", err.Error)
+		fmt.Println("Error generating token->", err.Error())
 		return
 	}
 
@@ -226,16 +229,17 @@ func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
 }
 
 // Initialize : load data from json file
-func (a *Application) Initialize(filename string) {
+func (ap *Application) Initialize(connection string) {
 	fmt.Println("Starting the application...")
-	config, _ := loadConfiguration(filename)
+	//config, _ := loadConfiguration(filename)
 	// fmt.Println(config.Database.IP)
 	// println("loadconfig USER: ", config.Database.User)
 	// println("loadconfig PASS: ", config.Database.Pass)
 	// println("loadconfig IP: ", config.Database.IP)
 	// println("loadconfig PORT: ", config.Database.Port)
 	// println("loadconfig NAME: ", config.Database.Name)
-	a.Client.Initialize(config.Database.User, config.Database.Pass, config.Database.IP, config.Database.Port, config.Database.Name)
+	//a.Client.Initialize(config.Database.User, config.Database.Pass, config.Database.IP, config.Database.Port, config.Database.Name)
+	ap.Client.Initialize(connection)
 }
 
 func loadConfiguration(filename string) (Config, error) {
