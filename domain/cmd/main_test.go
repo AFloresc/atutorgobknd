@@ -13,7 +13,7 @@ func TestMain(t *testing.T) {
 
 	//client := domain.Client{}
 
-	app.Initialize("config.json")
+	app.Initialize()
 	err := app.Client.AutoMigrate()
 	if err != nil {
 		log.Fatal(err)

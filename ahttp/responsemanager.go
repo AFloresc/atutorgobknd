@@ -9,13 +9,6 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-//COMMON METHODS:
-
-//RespondWithError : error responder in JSON format
-// func RespondWithError(w http.ResponseWriter, code int, message string) {
-// 	RespondWithJSON(w, code, map[string]string{"error": message})
-// }
-
 //RespondWithError : error responder in JSON format
 func RespondWithError(w http.ResponseWriter, code int, message Error) {
 	RespondWithJSON(w, code, map[string]string{"error": message.Message})
@@ -30,4 +23,11 @@ func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
-//END COMMON METHODS
+func Message(status bool, message string) map[string]interface{} {
+	return map[string]interface{}{"status": status, "message": message}
+}
+
+func Respond(w http.ResponseWriter, data map[string]interface{}) {
+	w.Header().Add("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
+}
