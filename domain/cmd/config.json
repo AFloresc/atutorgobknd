@@ -1,9 +1,0 @@
-{
-    "database": {
-        "user": "root",
-        "pass": "Bautista21",
-        "ip": "localhost",
-        "port": 3306,
-        "name": "atutor_dev"
-    }
-}
