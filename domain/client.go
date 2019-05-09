@@ -33,8 +33,11 @@ func (s *Client) AutoMigrate() error {
 	return s.db.AutoMigrate(
 		&Course{},
 		&Lesson{},
-		&Sublesson{},
-		&User{}).Error
+		&Content{},
+		&User{},
+		&Concept{},
+		&Content{},
+		&Question{}).Error
 }
 
 func (s *Client) Transaction() (*Client, error) {
