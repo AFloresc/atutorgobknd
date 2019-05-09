@@ -17,13 +17,14 @@ var (
 
 // UserProfile defines the table for managing user access to profiles
 type User struct {
-	UserID    int64  `gorm:"column:id;primary_key" json:"userID"`
-	Name      string `gorm:"column:name;primary_key" json:"name"`
-	Password  string `gorm:"column:password" json:"password"`
-	Email     string `gorm:"column:email" json:"email"`
-	CreatedAt mysql.NullTime
-	UpdatedAt mysql.NullTime
-	DeletedAt mysql.NullTime
+	UserID    int64          `gorm:"column:id;primary_key" json:"userID"`
+	Name      string         `gorm:"column:name" json:"name"`
+	Password  string         `gorm:"column:password" json:"password"`
+	Email     string         `gorm:"column:email" json:"email"`
+	Role      string         `gorm:"-" json:"role"`
+	CreatedAt mysql.NullTime `json:"created" gorm:"column:created"`
+	UpdatedAt mysql.NullTime `json:"updated" gorm:"column:updated"`
+	DeletedAt mysql.NullTime `json:"deleted" gorm:"column:deleted"` //Soft delete feature
 }
 
 // TableName sets the insert table name for this struct type
@@ -37,9 +38,6 @@ type UserClient interface {
 	CreateUser(ctx context.Context, user *User) error
 	GetUserByEmail(ctx context.Context, email string) (user User, err error)
 	GetUserProfiles(ctx context.Context, userID int64) ([]User, error)
-	AssociateProfile(ctx context.Context, userID int64, profileID int64) error
-	DisassociateProfile(ctx context.Context, userID int64, profileID int64) error
-	GetUserProfilesInShareOfVoice(ctx context.Context, userID int64) (profiles []int64, err error)
 }
 
 // asserts Client implements the UserProfilesClient interface
@@ -77,37 +75,4 @@ func (s Client) GetUserProfiles(ctx context.Context, userID int64) (profiles []U
 		return
 	}
 	return
-}
-
-func (s Client) GetUserProfilesInShareOfVoice(ctx context.Context, userID int64) (profiles []int64, err error) {
-	ups := []User{}
-	err = s.db.Where("user_id = ? AND share=true", userID).Find(&ups).Error
-	if err != nil {
-		return
-	}
-
-	for _, up := range ups {
-		profiles = append(profiles, up.UserID)
-	}
-	return
-}
-
-func (s Client) AssociateProfile(ctx context.Context, userID int64, profileID int64) error {
-	profile := User{
-		UserID: userID,
-	}
-	err := s.db.Create(&profile).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s Client) DisassociateProfile(ctx context.Context, userID int64, profileID int64) error {
-	err := s.db.Where("user_id = ? AND profile_id = ?", userID, profileID).Delete(User{}).Error
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
