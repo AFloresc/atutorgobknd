@@ -13,7 +13,9 @@ import (
 	"github.com/atutor/ahttp"
 	"github.com/atutor/domain"
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
+	"github.com/mitchellh/mapstructure"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -29,7 +31,8 @@ func (ap *Application) InitializeRoutes(router *mux.Router) {
 	//Signin handers
 	router.HandleFunc("/login", ap.login).Methods("POST")
 	//token protected routes
-	router.HandleFunc("/protected", TokenVerifyMiddleWare(protectedEndpoint)).Methods("GET")
+	router.HandleFunc("/protected", TokenVerifyMiddleWare(ap.protectedEndpoint)).Methods("GET")
+	router.HandleFunc("/test", TokenVerifyMiddleWare(TestEndpoint)).Methods("GET")
 }
 
 func (ap Application) signup(w http.ResponseWriter, r *http.Request) {
@@ -128,10 +131,24 @@ func (ap Application) login(w http.ResponseWriter, r *http.Request) {
 	ahttp.RespondWithJSON(w, http.StatusOK, jwt)
 }
 
-func protectedEndpoint(w http.ResponseWriter, r *http.Request) {
+func (ap Application) protectedEndpoint(w http.ResponseWriter, r *http.Request) {
 	log.Println("protectedEndpoint invoked.")
 	ahttp.RespondWithJSON(w, http.StatusOK, "succesfully called protectedEndpoints.")
 
+}
+
+func TestEndpoint(w http.ResponseWriter, req *http.Request) {
+	token := context.Get(req, "user")
+	var user domain.User
+	var errorObject ahttp.Error
+	mapstructure.Decode(token.(jwt.MapClaims), &user)
+	if user.Role != string(domain.RoleLogin) {
+		errorObject.Message = "Unauthorized acces."
+		ahttp.RespondWithError(w, http.StatusForbidden, errorObject)
+	} else {
+		ahttp.RespondWithJSON(w, http.StatusOK, user)
+		//json.NewEncoder(w).Encode(user)
+	}
 }
 
 func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
@@ -161,6 +178,8 @@ func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
 			}
 			// spew.Dump(token)
 			if token.Valid {
+				log.Println("Token claims: ", token.Claims)
+				context.Set(r, "user", token.Claims)
 				next.ServeHTTP(w, r)
 			} else {
 				errorObject.Message = error.Error()
@@ -173,6 +192,26 @@ func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 	})
+}
+
+func extractClaims(tokenStr string) (jwt.MapClaims, bool) {
+	hmacSecretString := os.Getenv("SECRET") // Value
+	hmacSecret := []byte(hmacSecretString)
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		// check token signing method etc
+		return hmacSecret, nil
+	})
+
+	if err != nil {
+		return nil, false
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, true
+	} else {
+		log.Printf("Invalid JWT Token")
+		return nil, false
+	}
 }
 
 // Initialize : load data from json file
