@@ -5,11 +5,16 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/atutor/controller"
+	"github.com/atutor/domain"
 	"github.com/gorilla/mux"
 )
 
 func TestMain(t *testing.T) {
-	app := Application{}
+
+	app := controller.Application{
+		Client: &domain.Client{},
+	}
 
 	//client := domain.Client{}
 
@@ -24,6 +29,6 @@ func TestMain(t *testing.T) {
 	app.InitializeRoutes(router)
 	log.Println("Listening on port 8000...")
 
-	log.Fatal(http.ListenAndServe(":8000", router))
+	log.Fatal(http.ListenAndServe(":8003", router))
 
 }
