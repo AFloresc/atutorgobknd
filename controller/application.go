@@ -33,6 +33,10 @@ func (ap *Application) InitializeRoutes(router *mux.Router) {
 	//token protected routes
 	router.HandleFunc("/protected", TokenVerifyMiddleWare(ap.protectedEndpoint)).Methods("GET")
 	router.HandleFunc("/test", TokenVerifyMiddleWare(TestEndpoint)).Methods("GET")
+
+	//Concept routes
+	router.HandleFunc("/concepts/{conceptid}/language/{language}", ap.GetConcept).Methods("GET")
+	router.HandleFunc("/concepts/", ap.CreateConcept).Methods("POST")
 }
 
 func (ap Application) signup(w http.ResponseWriter, r *http.Request) {
@@ -137,6 +141,44 @@ func (ap Application) protectedEndpoint(w http.ResponseWriter, r *http.Request) 
 
 }
 
+func (ap Application) GetConcept(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	var errorObject ahttp.Error
+	id, err := strconv.ParseInt(vars["conceptid"], 10, 0)
+	if err != nil {
+		errorObject.Message = "Invalid concept ID"
+		ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+		return
+	}
+	lang := vars["language"]
+	if err != nil {
+		errorObject.Message = "Invalid language"
+		ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+		return
+	}
+
+	concept, err := ap.Client.GetConcept(r.Context(), id, lang)
+	if err != nil {
+		errorObject.Message = err.Error()
+		ahttp.RespondWithError(w, http.StatusInternalServerError, errorObject)
+		return
+	}
+	ahttp.RespondWithJSON(w, http.StatusOK, concept)
+}
+
+// CreateConcept : Creates a concept into persistence
+func (ap Application) CreateConcept(w http.ResponseWriter, r *http.Request) {
+	var concept domain.Concept
+	var errorObject ahttp.Error
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&concept); err != nil {
+		errorObject.Message = err.Error()
+		ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+		return
+	}
+	ahttp.RespondWithJSON(w, http.StatusOK, concept)
+}
+
 func TestEndpoint(w http.ResponseWriter, req *http.Request) {
 	token := context.Get(req, "user")
 	var user domain.User
@@ -217,6 +259,12 @@ func extractClaims(tokenStr string) (jwt.MapClaims, bool) {
 // Initialize : load data from json file
 func (ap *Application) Initialize() {
 	fmt.Println("Starting the application...")
+
+	fmt.Println(`    _   _____        _`)
+	fmt.Println(`   / \ |_   _|_   _ | |_  ___   _ __ `)
+	fmt.Println(`  / _ \  | | | | | || __|/ _ \ | '__|`)
+	fmt.Println(` / ___ \ | | | |_| || |_| (_) || |   `)
+	fmt.Println(`/_/   \_\|_|  \__,_| \__|\___/ |_|by Alex Flores`)
 
 	port, err := strconv.Atoi(os.Getenv("DATABASE_PORT"))
 	if err != nil {
