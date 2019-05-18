@@ -24,7 +24,7 @@ func (t *Question) TableName() string {
 
 // TestClient : defines the interface to access Test data
 type QuestionClient interface {
-	GetQuestionsByTestID(ctx context.Context, testID int64) (Test *Test, err error)
+	GetQuestionsByTestID(ctx context.Context, testID int64) (questions []Question, err error)
 	CreateQuestion(ctx context.Context, question *Question) error
 	UpdateQuestion(ctx context.Context, question *Question) error
 	DeleteQuestion(ctx context.Context, testID int64) error
@@ -33,7 +33,7 @@ type QuestionClient interface {
 // asserts Client implements the TestClient interface
 var _ QuestionClient = (*Client)(nil)
 
-func (c Client) GetQuestionsByTestID(ctx context.Context, testID int64) (Test *Test, err error) {
+func (c Client) GetQuestionsByTestID(ctx context.Context, testID int64) (questions []Question, err error) {
 	//TODO
 	return nil, nil
 }
