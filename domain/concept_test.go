@@ -2,15 +2,30 @@ package domain
 
 import (
 	"context"
+	"log"
 	"testing"
 
+	"github.com/atutor/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBoxes(t *testing.T) {
-	client, err := NewTestClientFromEnv()
+func TestConcept(t *testing.T) {
+	dbConfig, err := utils.GetMySQLConfig()
 	if err != nil {
-		t.Fatal(err)
+		log.Fatal(err.Error())
+	}
+	dbConfig.Passwd = "Bautista21"
+
+	dbConfig.Addr = "localhost:3306"
+	if err != nil {
+		return
+	}
+
+	dbConfig.DBName = "atutor_dev"
+
+	client, err := NewClient(dbConfig)
+	if err != nil {
+		log.Fatal(err.Error())
 	}
 	defer client.Close()
 
@@ -46,10 +61,11 @@ func TestBoxes(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("TestGetConceptNotExist", func(t *testing.T) {
-		_, err := client.GetConcept(ctx, mockConcept.ConceptID)
+		_, err := client.GetConcept(ctx, mockConcept.ConceptID, "es")
 
 		assert := assert.New(t)
-		assert.NotNil(err)
+
+		assert.Nil(err)
 
 	})
 
@@ -76,7 +92,7 @@ func TestBoxes(t *testing.T) {
 	})
 
 	t.Run("TestGetConcept", func(t *testing.T) {
-		concept, err := client.GetConcept(ctx, mockConcept.ConceptID)
+		concept, err := client.GetConcept(ctx, mockConcept.ConceptID, "es")
 
 		if err != nil {
 			t.Error(err)
@@ -87,20 +103,20 @@ func TestBoxes(t *testing.T) {
 	})
 
 	t.Run("TestUpdateConcept", func(t *testing.T) {
-		mockConcept.Description = mockConcept.Description + "-CHANGED"
+		mockConcept.Language = "en"
 		err := client.UpdateConcept(ctx, &mockConcept)
 
 		if err != nil {
 			t.Error(err)
 		}
-		concept, err := client.GetConcept(ctx, mockConcept.ConceptID)
+		concept, err := client.GetConcept(ctx, mockConcept.ConceptID, "en")
 
 		if err != nil {
 			t.Error(err)
 		}
 		assert := assert.New(t)
 
-		assert.Equal(mockConcept.Description, concept.Description)
+		assert.Equal(mockConcept.Language, concept.Language)
 	})
 
 	t.Run("TestGetGetConceptBySearch", func(t *testing.T) {
@@ -133,6 +149,28 @@ func TestBoxes(t *testing.T) {
 		}
 
 		err = client.DeleteConcept(ctx, mockConcept3.ConceptID)
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("TestHardDeleteConcept", func(t *testing.T) {
+		err := client.hardDeleteConcept(ctx, mockConcept.ConceptID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = client.hardDeleteConcept(ctx, mockConcept2.ConceptID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = client.hardDeleteConcept(ctx, mockConcept3.ConceptID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = client.hardDeleteConcept(ctx, mockConcept4.ConceptID)
 		if err != nil {
 			t.Fatal(err)
 		}
