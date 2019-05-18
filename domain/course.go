@@ -1,12 +1,23 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"fmt"
+
+	"github.com/atutor/utils"
+	"github.com/go-sql-driver/mysql"
+)
 
 //Lesson represent every box inside the app
 type Course struct {
-	CourseID    int64  `json:"courseID" gorm:"column:courseID;primary_key"`
-	Name        string `json:"titlee" gorm:"column:Title"`
-	Description string `json:"description" gorm:"column:Description;type:text"`
+	CourseID    int64          `json:"courseID" gorm:"column:courseID;primary_key"`
+	Name        string         `json:"titlee" gorm:"column:title"`
+	Description string         `json:"description" gorm:"column:description;type:text"`
+	Target      string         `json:"target" gorm:"column:target;type:text"`
+	CreatedAt   mysql.NullTime `json:"created" gorm:"column:created"`
+	UpdatedAt   mysql.NullTime `json:"updated" gorm:"column:updated"`
+	DeletedAt   mysql.NullTime `json:"deleted" gorm:"column:deleted"` //Soft delete feature
+	Lessons     []Lesson       `json:"lessons"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -16,7 +27,8 @@ func (c *Course) TableName() string {
 
 // CourseClient : defines the interface to access Course data
 type CourseClient interface {
-	GetCourse(ctx context.Context, courseID int64) (Test *Test, err error)
+	GetCourse(ctx context.Context, courseID int64) (course Course, err error)
+	GetWholeCourse(ctx context.Context, courseID int64) (course Course, err error)
 	CreateCourse(ctx context.Context, course *Course) error
 	UpdateCourse(ctx context.Context, course *Course) error
 	DeleteCourse(ctx context.Context, courseID int64) error
@@ -26,27 +38,68 @@ type CourseClient interface {
 var _ CourseClient = (*Client)(nil)
 
 //GetCourse : Gets a Course by course ID
-func (c Client) GetCourse(ctx context.Context, courseID int64) (Test *Test, err error) {
-	//TODO
+func (c Client) GetCourse(ctx context.Context, courseID int64) (course Course, err error) {
+	crs := Course{}
+	err = c.db.Table("course").Where("CourseID = ?", courseID).Find(&crs).Error
+	if err != nil {
+		fmt.Println(err)
+		return course, nil
+	}
+	lessons, err := c.GetAllLessonsByCourseID(ctx, crs.CourseID, "es")
+	if err != nil {
+		fmt.Println(err)
+		return course, nil
+	} else {
+		for _, lesson := range lessons {
+			crs.Lessons = append(crs.Lessons, lesson)
+		}
+	}
+	return crs, nil
+}
 
-	return nil, nil
+//GetWholeCourse : Gets a Course by course ID
+func (c Client) GetWholeCourse(ctx context.Context, courseID int64) (course Course, err error) {
+	crs := Course{}
+	err = c.db.Table("course").Where("CourseID = ?", courseID).Find(&crs).Error
+	if err != nil {
+		fmt.Println(err)
+		return course, nil
+	}
+	return crs, nil
 }
 
 //CreateCourse : Creates a Coure by Course object
 func (c Client) CreateCourse(ctx context.Context, course *Course) error {
-	//TODO
+	err := c.db.Create(&course).Error
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (c Client) UpdateCourse(ctx context.Context, course *Course) error {
-	//TODO
-
+	err := c.db.Save(&course).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (c Client) DeleteCourse(ctx context.Context, courseID int64) error {
-	//TODO
+	if courseID == 0 {
+		return fmt.Errorf("Error!!! (DeleteCurse), incorrect Concept ID: %d", courseID)
+	}
+	course := Course{
+		CourseID: courseID,
+	}
+	return c.db.Delete(&course).Error
+}
 
-	return nil
+// hardDeleteCurse : deletes permanently a course, WARNING!!! for testing purposes only!!!
+func (c Client) hardDeleteCourse(ctx context.Context, courseID int64) error {
+	if courseID != 0 {
+		return c.db.Exec("DELETE FROM course WHERE courseID=? ", courseID).Error
+	}
+	return utils.NewError("Course ID value not allowed on hard Delete action")
 }
