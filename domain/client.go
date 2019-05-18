@@ -37,7 +37,8 @@ func (s *Client) AutoMigrate() error {
 		&User{},
 		&Concept{},
 		&Content{},
-		&Question{}).Error
+		&Question{},
+		&UserLessons{}).Error
 }
 
 func (s *Client) Transaction() (*Client, error) {
@@ -69,7 +70,7 @@ func (s *Client) Close() error {
 
 func (s *Client) Initialize(user string, password string, ip string, port int, dbname string) {
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", user, password, ip, port, dbname)
-	println("Connection: ", connectionString)
+	// println("Connection: ", connectionString)
 	var err error
 	s.db, err = gorm.Open("mysql", connectionString)
 	if err != nil {
