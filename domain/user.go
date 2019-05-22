@@ -25,6 +25,7 @@ type User struct {
 	CreatedAt mysql.NullTime `json:"created" gorm:"column:created"`
 	UpdatedAt mysql.NullTime `json:"updated" gorm:"column:updated"`
 	DeletedAt mysql.NullTime `json:"deleted" gorm:"column:deleted"` //Soft delete feature
+	Marks     []int          `gorm:"-" json:"marks"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -37,7 +38,6 @@ type UserClient interface {
 	GetUserByPassword(ctx context.Context, userID int64) (user User, err error)
 	CreateUser(ctx context.Context, user *User) error
 	GetUserByEmail(ctx context.Context, email string) (user User, err error)
-	GetUserProfiles(ctx context.Context, userID int64) ([]User, error)
 }
 
 // asserts Client implements the UserProfilesClient interface
@@ -49,12 +49,17 @@ func (s Client) CreateUser(ctx context.Context, user *User) error {
 }
 
 func (s Client) GetUserByPassword(ctx context.Context, userID int64) (user User, err error) {
-
 	err = s.db.Where("user_id = ?", userID).Find(&user).Error
 	if err != nil {
 		return
 	}
-
+	marks, err := s.GetAllMarksByUser(ctx, userID)
+	if err != nil {
+		return
+	}
+	for _, mark := range marks {
+		user.Marks = append(user.Marks, mark.Value)
+	}
 	return
 }
 
@@ -65,14 +70,5 @@ func (s Client) GetUserByEmail(ctx context.Context, email string) (user User, er
 		return
 	}
 
-	return
-}
-
-func (s Client) GetUserProfiles(ctx context.Context, userID int64) (profiles []User, err error) {
-	profiles = []User{}
-	err = s.db.Where("user_id = ?", userID).Find(&profiles).Error
-	if err != nil {
-		return
-	}
 	return
 }
