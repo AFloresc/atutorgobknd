@@ -2,18 +2,19 @@ package domain
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-sql-driver/mysql"
 )
 
 //Mark : represent every mark of a Test done by Users
 type Mark struct {
-	UserID    int64          `json:"userID" gorm:"column:userID;primary_key"`
-	TestID    int64          `json:"testID" gorm:"column:testID;primary_key"`
-	value     int            `json:"value" gorm:"column:value"`
-	CreatedAt mysql.NullTime `json:"created" gorm:"column:created"`
-	UpdatedAt mysql.NullTime `json:"updated" gorm:"column:updated"`
-	DeletedAt mysql.NullTime `json:"deleted" gorm:"column:deleted"` //Soft delete feature
+	UserID        int64          `json:"userID" gorm:"column:userID;"`
+	QuestionaryID int64          `json:"questionaryID" gorm:"column:questionaryID;"`
+	Value         int            `json:"val" gorm:"column:val"`
+	CreatedAt     mysql.NullTime `json:"created" gorm:"column:created"`
+	UpdatedAt     mysql.NullTime `json:"updated" gorm:"column:updated"`
+	DeletedAt     mysql.NullTime `json:"deleted" gorm:"column:deleted"` //Soft delete feature
 }
 
 //TableName : table name for Gorm
@@ -35,7 +36,12 @@ type MarkClient interface {
 var _ MarkClient = (*Client)(nil)
 
 func (c *Client) GetAllMarksByUser(ctx context.Context, userID int64) (marks []Mark, err error) {
-	//TODO
+	mrks := []Mark{}
+	err = c.db.Table("marks").Where("userID = ?", userID).Find(&mrks).Error
+	if err != nil {
+		fmt.Println(err)
+		return mrks, nil
+	}
 	return
 }
 func (c *Client) GetAllMarks(ctx context.Context, courseID int64, language string) (marks []Mark, err error) {
