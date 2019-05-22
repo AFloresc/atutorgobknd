@@ -24,7 +24,7 @@ func (ul *UserLessons) TableName() string {
 // UserLessonsClient : defines the interface to access UserLessons data
 type UserLessonsClient interface {
 	GetUserLessons(ctx context.Context, userID int64, lessonID int64) (userlessons UserLessons, err error)
-	GetAllUserLessonsByCourseID(ctx context.Context, courseID int64, userID int64, lessonID int64) (lesson []Lesson, err error)
+	GetAllUserLessons(ctx context.Context, courseID int64, userID int64) (lessonsID []int64, err error)
 	CreateUserLessons(ctx context.Context, userlessons *UserLessons) error
 	UpdateUserLessons(ctx context.Context, userlessons *UserLessons) error
 	DeleteUserLessons(ctx context.Context, userID int64, lessonID int64) error
@@ -39,17 +39,32 @@ func (c Client) GetUserLessons(ctx context.Context, userID int64, lessonID int64
 	err = c.db.Table("user_lessons").Where("userID = ? AND lessonID = ?", userID, lessonID).Find(&uLesson).Error
 	if err != nil {
 		fmt.Println(err)
+		return uLesson, err
 	}
 	return uLesson, nil
 }
 
-func (c Client) GetAllUserLessonsByCourseID(ctx context.Context, courseID int64, userID int64, lessonID int64) (lesson []Lesson, err error) {
-	//TODO
-	return
+// GetAllUserLessons : retrieves all the lessons an user has viewed
+func (c Client) GetAllUserLessons(ctx context.Context, courseID int64, userID int64) (lessonsID []int64, err error) {
+	ids := []int64{}
+	uLessons := []UserLessons{}
+	err = c.db.Table("user_lessons").Where("userID = ? ", userID).Find(&uLessons).Error
+	if err != nil {
+		fmt.Println(err)
+		return ids, err
+	}
+	for _, lesson := range uLessons {
+		ids = append(ids, lesson.LessonID)
+	}
+	return ids, nil
 }
 
 func (c Client) CreateUserLessons(ctx context.Context, userlessons *UserLessons) error {
-	//TODO
+	err := c.db.Create(userlessons).Error
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 func (c Client) UpdateUserLessons(ctx context.Context, userlessons *UserLessons) error {
