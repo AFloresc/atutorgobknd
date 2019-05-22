@@ -38,7 +38,9 @@ func (s *Client) AutoMigrate() error {
 		&Concept{},
 		&Content{},
 		&Question{},
-		&UserLessons{}).Error
+		&UserLessons{},
+		&Mark{},
+		&Questionary{}).Error
 }
 
 func (s *Client) Transaction() (*Client, error) {
