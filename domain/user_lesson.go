@@ -59,6 +59,7 @@ func (c Client) GetAllUserLessons(ctx context.Context, courseID int64, userID in
 	return ids, nil
 }
 
+// CreateUserLessons :
 func (c Client) CreateUserLessons(ctx context.Context, userlessons *UserLessons) error {
 	err := c.db.Create(userlessons).Error
 	if err != nil {
@@ -67,6 +68,8 @@ func (c Client) CreateUserLessons(ctx context.Context, userlessons *UserLessons)
 
 	return nil
 }
+
+// UpdateUserLessons :
 func (c Client) UpdateUserLessons(ctx context.Context, userlessons *UserLessons) error {
 	err := c.db.Save(userlessons).Error
 	if err != nil {
