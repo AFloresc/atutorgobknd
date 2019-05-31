@@ -25,7 +25,7 @@ func (q *Questionary) TableName() string {
 
 // QuestionaryClient : defines the interface to access Questionary data
 type QuestionaryClient interface {
-	GetQuestionary(ctx context.Context, QuestionaryID int64) (questionary Questionary, err error)
+	GetQuestionary(ctx context.Context, questionaryID int64) (questionary Questionary, err error)
 	GetQuestionaryByLessonID(ctx context.Context, LessonID int64) (questionary Questionary, err error)
 	CreateQuestionary(ctx context.Context, questionary *Questionary) error
 	UpdateQuestionary(ctx context.Context, questionary *Questionary) error
@@ -35,20 +35,49 @@ type QuestionaryClient interface {
 // asserts Client implements the QuestionaryClient interface
 var _ QuestionaryClient = (*Client)(nil)
 
-func (c Client) GetQuestionary(ctx context.Context, QuestionaryID int64) (questionary Questionary, err error) {
+// GetQuestionary :
+func (c Client) GetQuestionary(ctx context.Context, questionaryID int64) (questionary Questionary, err error) {
 	q := Questionary{}
-	err = c.db.Table("Questionary").Where("QuestionaryID = ?", QuestionaryID).Find(&q).Error
+	err = c.db.Table("Questionary").Where("QuestionaryID = ?", questionaryID).Find(&q).Error
 	if err != nil {
 		fmt.Println(err)
 		return q, nil
 	}
+	questions, err := c.GetQuestionsByQuestionaryID(ctx, questionaryID)
+	if err != nil {
+		fmt.Println(err)
+		return q, nil
+	}
+
+	for _, question := range questions {
+		q.Questions = append(q.Questions, question)
+	}
+
 	return q, nil
 }
 
+// GetQuestionaryByLessonID :
 func (c Client) GetQuestionaryByLessonID(ctx context.Context, LessonID int64) (questionary Questionary, err error) {
-	//TODO
-	return
+	q := Questionary{}
+	err = c.db.Table("Questionary").Where("LessonID = ?", LessonID).Find(&q).Error
+	if err != nil {
+		fmt.Println(err)
+		return q, nil
+	}
+	questions, err := c.GetQuestionsByQuestionaryID(ctx, q.QuestionaryID)
+	if err != nil {
+		fmt.Println(err)
+		return q, nil
+	}
+
+	for _, question := range questions {
+		q.Questions = append(q.Questions, question)
+	}
+
+	return q, nil
 }
+
+// CreateQuestionary :
 func (c Client) CreateQuestionary(ctx context.Context, questionary *Questionary) error {
 	err := c.db.Create(&questionary).Error
 	if err != nil {
@@ -56,11 +85,23 @@ func (c Client) CreateQuestionary(ctx context.Context, questionary *Questionary)
 	}
 	return nil
 }
+
+// UpdateQuestionary :
 func (c Client) UpdateQuestionary(ctx context.Context, questionary *Questionary) error {
-	//TODO
+	err := c.db.Save(&questionary).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }
+
+//  DeleteQuestionary :
 func (c Client) DeleteQuestionary(ctx context.Context, questionaryID int64) error {
-	//TODO
-	return nil
+	if questionaryID == 0 {
+		return fmt.Errorf("Error!!! (DeleteQuestionary), incorrect Questionary ID: %d", questionaryID)
+	}
+	questionary := Questionary{
+		QuestionaryID: questionaryID,
+	}
+	return c.db.Delete(&questionary).Error
 }
