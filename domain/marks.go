@@ -19,52 +19,104 @@ type Mark struct {
 
 //TableName : table name for Gorm
 func (m *Mark) TableName() string {
-	return "marks"
+	return "mark"
 }
 
 // MarkClient : defines the interface to access Test Marks data
 type MarkClient interface {
+	GetMark(ctx context.Context, userID int64, quetionaryID int64) (mark Mark, err error)
+	GetMarkByLesson(ctx context.Context, userID int64, lessonID int64) (mark Mark, err error)
 	GetAllMarksByUser(ctx context.Context, userID int64) (marks []Mark, err error)
 	GetAllMarks(ctx context.Context, courseID int64, language string) (marks []Mark, err error)
-	GetAllMarksByLesson(ctx context.Context, lessonID Lesson) error
+	GetAllMarksByLesson(ctx context.Context, lessonID Lesson) (marks []Mark, err error)
 	CreateMark(ctx context.Context, mark *Mark) error
 	UpdateMark(ctx context.Context, mark *Mark) error
-	DeleteMark(ctx context.Context, mark *Mark) error
+	DeleteMark(ctx context.Context, userID int64, questionaryID int64) error
 }
 
 // asserts Client implements the MarkClient interface
 var _ MarkClient = (*Client)(nil)
 
+// GetMark :
+func (c *Client) GetMark(ctx context.Context, userID int64, quetionaryID int64) (mark Mark, err error) {
+	mk := Mark{}
+	err = c.db.Table("mark").Where("userID = ? AND quetionaryID = ?", userID, quetionaryID).Find(&mk).Error
+	if err != nil {
+		fmt.Println(err)
+	}
+	return mk, nil
+}
+
+// GetMarkByLesson :
+func (c *Client) GetMarkByLesson(ctx context.Context, userID int64, lessonID int64) (mark Mark, err error) {
+	q, err := c.GetQuestionaryByLessonID(ctx, lessonID)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	mk := Mark{}
+
+	err = c.db.Table("mark").Where("userID = ? AND lessonID = ?", userID, q.QuestionaryID).Find(&mk).Error
+	if err != nil {
+		fmt.Println(err)
+	}
+	return mk, nil
+}
+
+// GetAllMarksByUser :
 func (c *Client) GetAllMarksByUser(ctx context.Context, userID int64) (marks []Mark, err error) {
 	mrks := []Mark{}
-	err = c.db.Table("marks").Where("userID = ?", userID).Find(&mrks).Error
+	err = c.db.Table("mark").Where("userID = ?", userID).Find(&mrks).Error
+	if err != nil {
+		fmt.Println(err)
+	}
+	return mrks, nil
+}
+
+// GetAllMarks :
+func (c *Client) GetAllMarks(ctx context.Context, courseID int64, language string) (marks []Mark, err error) {
+	//TODO
+	return
+}
+
+// GetAllMarksByLesson :
+func (c *Client) GetAllMarksByLesson(ctx context.Context, lessonID Lesson) (marks []Mark, err error) {
+	mrks := []Mark{}
+	err = c.db.Table("marks").Where("lessonID = ?", lessonID).Find(&mrks).Error
 	if err != nil {
 		fmt.Println(err)
 		return mrks, nil
 	}
 	return
 }
-func (c *Client) GetAllMarks(ctx context.Context, courseID int64, language string) (marks []Mark, err error) {
-	//TODO
-	return
-}
 
-func (c *Client) GetAllMarksByLesson(ctx context.Context, lessonID Lesson) error {
-	//TODO
-	return nil
-}
-
+// CreateMark :
 func (c *Client) CreateMark(ctx context.Context, mark *Mark) error {
-	//TODO
+	err := c.db.Create(&mark).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
+// UpdateMark :
 func (c *Client) UpdateMark(ctx context.Context, mark *Mark) error {
-	//TODO
+	err := c.db.Save(&mark).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (c *Client) DeleteMark(ctx context.Context, mark *Mark) error {
-	//TODO
-	return nil
+// DeleteMark :
+func (c *Client) DeleteMark(ctx context.Context, userID int64, questionaryID int64) error {
+	if userID == 0 || questionaryID == 0 {
+		return fmt.Errorf("Error!!! (DeleteMark), incorrect UserID ID: %d | QuestionaryID: %d", userID, questionaryID)
+	}
+
+	mark := Mark{
+		UserID:        userID,
+		QuestionaryID: questionaryID,
+	}
+	return c.db.Delete(&mark).Error
 }
