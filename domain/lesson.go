@@ -26,7 +26,7 @@ type Lesson struct {
 
 //TableName : table name for Gorm
 func (l *Lesson) TableName() string {
-	return "lessons"
+	return "lesson"
 }
 
 // LessonClient : defines the interface to access Lesson data
@@ -68,7 +68,7 @@ func (c Client) CreateLesson(ctx context.Context, lesson *Lesson) error {
 	return nil
 }
 func (c Client) UpdateLesson(ctx context.Context, lesson *Lesson) error {
-	err := c.db.Save(lesson).Error
+	err := c.db.Save(&lesson).Error
 	if err != nil {
 		return err
 	}
