@@ -8,7 +8,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-//Lesson represent every box inside the app
+// Course represent every course inside the app
 type Course struct {
 	CourseID    int64          `json:"courseID" gorm:"column:courseID;primary_key"`
 	Name        string         `json:"titlee" gorm:"column:title"`
@@ -49,10 +49,11 @@ func (c Client) GetCourse(ctx context.Context, courseID int64) (course Course, e
 	if err != nil {
 		fmt.Println(err)
 		return course, nil
-	} else {
-		for _, lesson := range lessons {
-			crs.Lessons = append(crs.Lessons, lesson)
-		}
+	}
+
+	for _, lesson := range lessons {
+		crs.Lessons = append(crs.Lessons, lesson)
+
 	}
 	return crs, nil
 }
@@ -78,6 +79,7 @@ func (c Client) CreateCourse(ctx context.Context, course *Course) error {
 	return nil
 }
 
+// UpdateCourse :
 func (c Client) UpdateCourse(ctx context.Context, course *Course) error {
 	err := c.db.Save(&course).Error
 	if err != nil {
@@ -86,6 +88,7 @@ func (c Client) UpdateCourse(ctx context.Context, course *Course) error {
 	return nil
 }
 
+// DeleteCourse :
 func (c Client) DeleteCourse(ctx context.Context, courseID int64) error {
 	if courseID == 0 {
 		return fmt.Errorf("Error!!! (DeleteCurse), incorrect Concept ID: %d", courseID)
