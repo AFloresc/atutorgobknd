@@ -37,6 +37,7 @@ type ConceptClient interface {
 // asserts Client implements the ConceptClient interface
 var _ ConceptClient = (*Client)(nil)
 
+// GetConcept :
 func (c Client) GetConcept(ctx context.Context, conceptID int64, language string) (concept Concept, err error) {
 	conc := Concept{}
 	err = c.db.Table("concept").Where("ID = ? AND language = ?", conceptID, language).Find(&conc).Error
@@ -75,6 +76,7 @@ func (c Client) UpdateConcept(ctx context.Context, concept *Concept) error {
 	return nil
 }
 
+// DeleteConcept :
 func (c Client) DeleteConcept(ctx context.Context, conceptID int64) error {
 	if conceptID == 0 {
 		return fmt.Errorf("Error!!! (DeleteConcept), incorrect Concept ID: %d", conceptID)
