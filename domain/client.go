@@ -43,6 +43,7 @@ func (s *Client) AutoMigrate() error {
 		&Questionary{}).Error
 }
 
+// Transaction :
 func (s *Client) Transaction() (*Client, error) {
 	client := Client{
 		db: s.db.Begin(),
@@ -50,6 +51,7 @@ func (s *Client) Transaction() (*Client, error) {
 	return &client, nil
 }
 
+// NewTransaction : This method starts a new transaction
 func NewTransaction(s *Client) (*Client, error) {
 	client := Client{
 		db: s.db.Begin(),
@@ -57,10 +59,12 @@ func NewTransaction(s *Client) (*Client, error) {
 	return &client, nil
 }
 
+// Rollback : This method makes a rollback on transaction
 func (s *Client) Rollback() {
 	s.db.Rollback()
 }
 
+// Commit : This method commits transaction
 func (s *Client) Commit() error {
 	return s.db.Commit().Error
 }
@@ -70,6 +74,7 @@ func (s *Client) Close() error {
 	return s.db.Close()
 }
 
+// Initialize : Initializes the mysql database connection
 func (s *Client) Initialize(user string, password string, ip string, port int, dbname string) {
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", user, password, ip, port, dbname)
 	// println("Connection: ", connectionString)
