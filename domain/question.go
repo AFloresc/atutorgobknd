@@ -4,27 +4,28 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/atutor/utils"
 	"github.com/go-sql-driver/mysql"
 )
 
-//Test represent every box inside the app
+//Question represents every question inside questionary
 type Question struct {
-	QuestionID  int64          `json:"questionID" gorm:"column:questionID;primary_key"`
-	Description string         `json:"description" gorm:"column:description"`
-	TestID      int64          `json:"testID" gorm:"column:test_id"`
-	CreatedAt   mysql.NullTime `json:"created" gorm:"column:created"`
-	UpdatedAt   mysql.NullTime `json:"updated" gorm:"column:updated"`
-	DeletedAt   mysql.NullTime `json:"deleted" gorm:"column:deleted"` //Soft delete feature
+	QuestionID    int64          `json:"questionID" gorm:"column:questionID;primary_key"`
+	QuestionaryID int64          `json:"questionaryID" gorm:"column:questionaryID"`
+	Description   string         `json:"description" gorm:"column:description"`
+	CreatedAt     mysql.NullTime `json:"created" gorm:"column:created"`
+	UpdatedAt     mysql.NullTime `json:"updated" gorm:"column:updated"`
+	DeletedAt     mysql.NullTime `json:"deleted" gorm:"column:deleted"` //Soft delete feature
 }
 
 //TableName : table name for Gorm
 func (t *Question) TableName() string {
-	return "tests"
+	return "question"
 }
 
-// TestClient : defines the interface to access Test data
+// QuestionClient : defines the interface to access Quertion data
 type QuestionClient interface {
-	GetQuestionsByTestID(ctx context.Context, testID int64) (questions []Question, err error)
+	GetQuestionsByQuestionaryID(ctx context.Context, questionaryID int64) (questions []Question, err error)
 	CreateQuestion(ctx context.Context, question *Question) error
 	UpdateQuestion(ctx context.Context, question *Question) error
 	DeleteQuestion(ctx context.Context, testID int64) error
@@ -33,19 +34,35 @@ type QuestionClient interface {
 // asserts Client implements the TestClient interface
 var _ QuestionClient = (*Client)(nil)
 
-func (c Client) GetQuestionsByTestID(ctx context.Context, testID int64) (questions []Question, err error) {
-	//TODO
-	return nil, nil
+func (c Client) GetQuestionsByQuestionaryID(ctx context.Context, questionaryID int64) (questions []Question, err error) {
+	q := []Question{}
+	err = c.db.Table("question").Where("QuestionaryID = ?", questionaryID).Find(&q).Error
+	if err != nil {
+		fmt.Println(err)
+	}
+	return q, nil
 }
 
+// CreateQuestion :
 func (c Client) CreateQuestion(ctx context.Context, question *Question) error {
-	//TODO
+	err := c.db.Create(&question).Error
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
+
+// UpdateQuestion :
 func (c Client) UpdateQuestion(ctx context.Context, question *Question) error {
-	//TODO
+	err := c.db.Save(&question).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }
+
+// DeleteQuestion :
 func (c Client) DeleteQuestion(ctx context.Context, questionID int64) error {
 	if questionID == 0 {
 		return fmt.Errorf("Error!!! (DeleteQuestion), incorrect Question ID: %d", questionID)
@@ -55,4 +72,12 @@ func (c Client) DeleteQuestion(ctx context.Context, questionID int64) error {
 		QuestionID: questionID,
 	}
 	return c.db.Delete(&question).Error
+}
+
+// hardDeleteQuestion :
+func (c Client) hardDeleteQuestion(ctx context.Context, questionID int64) error {
+	if questionID != 0 {
+		return c.db.Exec("DELETE FROM question WHERE questionID=? ", questionID).Error
+	}
+	return utils.NewError("Question ID value not allowed on hard Delete action")
 }
