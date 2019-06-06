@@ -9,9 +9,9 @@ import (
 
 //Questionary represent every box inside the app
 type Questionary struct {
-	QuestionaryID int64          `json:"questionaryID" gorm:"column:QuestionaryID;primary_key"`
+	QuestionaryID int64          `json:"questionaryID" gorm:"column:questionaryID;primary_key"`
 	Description   string         `json:"description" gorm:"column:description"`
-	LessonID      int64          `json:"QuestionaryID" gorm:"column:Questionary_id"`
+	LessonID      int64          `json:"lessonID" gorm:"column:lessonID"`
 	Questions     []Question     `json:"questions"`
 	CreatedAt     mysql.NullTime `json:"created" gorm:"column:created"`
 	UpdatedAt     mysql.NullTime `json:"updated" gorm:"column:updated"`
@@ -20,7 +20,7 @@ type Questionary struct {
 
 //TableName : table name for Gorm
 func (q *Questionary) TableName() string {
-	return "questionaries"
+	return "questionary"
 }
 
 // QuestionaryClient : defines the interface to access Questionary data
