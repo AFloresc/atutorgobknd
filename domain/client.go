@@ -3,7 +3,9 @@ package domain
 import (
 	"fmt"
 	"log"
+	"os"
 
+	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/mysql"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 )
@@ -76,8 +78,22 @@ func (s *Client) Close() error {
 
 // Initialize : Initializes the mysql database connection
 func (s *Client) Initialize(user string, password string, ip string, port int, dbname string) {
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", user, password, ip, port, dbname)
-	// println("Connection: ", connectionString)
+	env := os.Getenv("ATUTOR_ENV")
+	connectionString := ""
+	if env == "test" {
+		connectionString = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", user, password, ip, port, dbname)
+	} else {
+		myInstanceName := "atutor:europe-west1:atutor-develop-db"
+		connectionString = fmt.Sprintf("%s:%s@cloudsql(%s)/%s?charset=utf8&parseTime=True&loc=UTC", user, password, myInstanceName, dbname)
+	}
+	//connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", user, password, ip, port, dbname)
+	//sql.Open("mysql", "cloudsql:my-instance*dbname/user/passwd")
+
+	// connectionStringDev := fmt.Sprintf("cloudsql:%s/%s/%s", myInstanceName, user, password)
+	// var dbConnectionString = fmt.Sprintf("%s:%s@cloudsql(atutor-develop-db)/%?charset=utf8&parseTime=True&loc=UTC", user, password
+	// var dbConnectionString = fmt.Sprintf("%s:%s@cloudsql(%s)/%s?charset=utf8&parseTime=True&loc=UTC", user, password, myInstanceName, dbname)
+	//user:password@cloudsql(copiedPastedInstanceConnectionName)/databaseName?charset=charset&collation=collation&tls=tlsConfigName&parseTime=true
+	println("Connection: ", connectionString)
 	var err error
 	s.db, err = gorm.Open("mysql", connectionString)
 	if err != nil {
@@ -85,4 +101,5 @@ func (s *Client) Initialize(user string, password string, ip string, port int, d
 	} else {
 		fmt.Println("Connection Established.")
 	}
+
 }
