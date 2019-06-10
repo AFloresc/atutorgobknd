@@ -31,8 +31,8 @@ func (l *Lesson) TableName() string {
 
 // LessonClient : defines the interface to access Lesson data
 type LessonClient interface {
-	GetLesson(ctx context.Context, lessonID int64) (lesson Lesson, err error)
-	GetAllLessonsByCourseID(ctx context.Context, courseID int64, language string) (lessons []Lesson, err error)
+	GetLesson(ctx context.Context, lessonID int64) (lesson *Lesson, err error)
+	GetAllLessonsByCourseID(ctx context.Context, courseID int64) (lessons []Lesson, err error)
 	CreateLesson(ctx context.Context, lesson *Lesson) error
 	UpdateLesson(ctx context.Context, lesson *Lesson) error
 	DeleteLesson(ctx context.Context, lessonID int64) error
@@ -42,29 +42,28 @@ type LessonClient interface {
 var _ LessonClient = (*Client)(nil)
 
 // GetLesson : retrieves a lesson by it's ID
-func (c Client) GetLesson(ctx context.Context, lessonID int64) (lesson Lesson, err error) {
+func (c Client) GetLesson(ctx context.Context, lessonID int64) (lesson *Lesson, err error) {
 	ls := Lesson{}
-	err = c.db.Table("lessons").Where("lessonID = ?", lessonID).Find(&ls).Error
+	err = c.db.Table("lesson").Where("lessonID = ?", lessonID).Find(&ls).Error
 	if err != nil {
 		fmt.Println(err)
-		return ls, nil
+		return nil, nil
 	}
 	contents, err := c.GetAllContentByLessonID(ctx, ls.LessonID)
 	if err != nil {
 		fmt.Println(err)
-		return ls, nil
+		return nil, nil
 	}
 	for _, content := range contents {
 		ls.Contents = append(ls.Contents, content)
 	}
-	return ls, nil
+	return &ls, nil
 }
 func (c Client) CreateLesson(ctx context.Context, lesson *Lesson) error {
 	err := c.db.Create(&lesson).Error
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 func (c Client) UpdateLesson(ctx context.Context, lesson *Lesson) error {
@@ -86,7 +85,7 @@ func (c Client) DeleteLesson(ctx context.Context, lessonID int64) error {
 
 }
 
-func (c Client) GetAllLessonsByCourseID(ctx context.Context, courseID int64, language string) (lessons []Lesson, err error) {
+func (c Client) GetAllLessonsByCourseID(ctx context.Context, courseID int64) (lessons []Lesson, err error) {
 
 	ls := []Lesson{}
 	err = c.db.Table("lessons").Where("courseID = ?", courseID).Find(&ls).Error
@@ -105,6 +104,31 @@ func (c Client) GetAllLessonsByCourseID(ctx context.Context, courseID int64, lan
 		}
 	}
 	return ls, nil
+}
+
+// GetLessonsByLanguage : retrieves all the concepts in a language
+func (c Client) GetLessonsByLanguage(ctx context.Context, language string) (lessons []Lesson, err error) {
+	lessns := []Lesson{}
+	if !utils.ValidateLanguage(language) {
+		return nil, utils.NewError("Unknown Language.")
+	}
+	err = c.db.Table("lesson").Where("language = ?", language).Find(&lessns).Error
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for index, lesson := range lessns {
+		contents, err := c.GetAllContentByLessonID(ctx, lesson.LessonID)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		for _, content := range contents {
+			lessns[index].Contents = append(lessns[index].Contents, content)
+		}
+	}
+	return lessns, nil
 }
 
 func (c Client) hardDeleteLesson(ctx context.Context, lessonID int64) error {

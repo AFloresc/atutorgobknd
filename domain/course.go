@@ -45,7 +45,7 @@ func (c Client) GetCourse(ctx context.Context, courseID int64) (course Course, e
 		fmt.Println(err)
 		return course, nil
 	}
-	lessons, err := c.GetAllLessonsByCourseID(ctx, crs.CourseID, "es")
+	lessons, err := c.GetAllLessonsByCourseID(ctx, crs.CourseID)
 	if err != nil {
 		fmt.Println(err)
 		return course, nil

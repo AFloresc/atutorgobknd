@@ -79,6 +79,21 @@ const (
 	LanguageUNKNOWN Language = "unknown"
 )
 
+var exixtentLanguages = []string{"es", "en", "ct"}
+
 func (l Language) String() string {
 	return string(l)
+}
+
+// ValidateLanguage : check if the language is correct
+func ValidateLanguage(lang string) bool {
+	if len(lang) != 2 {
+		return false
+	}
+	for _, lan := range exixtentLanguages {
+		if lan == lang {
+			return true
+		}
+	}
+	return false
 }

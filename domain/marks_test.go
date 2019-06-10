@@ -73,6 +73,26 @@ func TestMark(t *testing.T) {
 		assert.Equal(mockMark.Value, mark.Value)
 	})
 
+	t.Run("TestGetMarkByLesson", func(t *testing.T) {
+		// Get questionaryID from lesson
+
+		lesson, err := client.GetQuestionary(ctx, mockMark.QuestionaryID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		mark, err := client.GetMarkByLesson(ctx, mockMark.UserID, lesson.LessonID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert := assert.New(t)
+
+		assert.Equal(mockMark.UserID, mark.UserID)
+		assert.Equal(mockMark.QuestionaryID, mark.QuestionaryID)
+		assert.Equal(mockMark.Value, mark.Value)
+	})
+
 	t.Run("TestUpdateMark", func(t *testing.T) {
 		mockMark.Value = 9
 		err := client.UpdateMark(ctx, &mockMark)

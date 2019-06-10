@@ -136,17 +136,17 @@ func TestLesson(t *testing.T) {
 		}
 	})
 
-	// t.Run("TestHardDeleteCourse", func(t *testing.T) {
-	// 	err := client.hardDeleteLesson(ctx, mockLesson.LessonID)
-	// 	if err != nil {
-	// 		t.Fatal(err)
-	// 	}
+	t.Run("TestHardDeleteCourse", func(t *testing.T) {
+		err := client.hardDeleteLesson(ctx, mockLesson.LessonID)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	// 	err = client.hardDeleteLesson(ctx, mockLesson.LessonID)
-	// 	if err != nil {
-	// 		t.Fatal(err)
-	// 	}
-	// })
+		err = client.hardDeleteLesson(ctx, mockLesson.LessonID)
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
 }
 
 func TestGtLesson1(t *testing.T) {
@@ -179,6 +179,40 @@ func TestGtLesson1(t *testing.T) {
 		fmt.Println("Error retrieving lesson 3")
 	} else {
 		fmt.Println("LESSON---> ", lesson)
+	}
+
+}
+
+func TestGtLessonByLanguage(t *testing.T) {
+	dbConfig, err := utils.GetMySQLConfig()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	dbConfig.Passwd = "Bautista21"
+
+	dbConfig.Addr = "localhost:3306"
+	if err != nil {
+		return
+	}
+
+	dbConfig.DBName = "atutor_dev"
+
+	client, err := NewClient(dbConfig)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer client.Close()
+
+	err = client.AutoMigrate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	lessons, err := client.GetLessonsByLanguage(context.Background(), "jp")
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		fmt.Println("LESSONS---> ", lessons)
 	}
 
 }
