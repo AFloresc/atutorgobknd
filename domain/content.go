@@ -9,7 +9,7 @@ import (
 
 //Content :
 type Content struct {
-	ContentID int64          `json:"sublessonID" gorm:"column:id;primary_key"`
+	ContentID int64          `json:"contentID" gorm:"column:id;primary_key"`
 	Title     string         `json:"title" gorm:"column:title"`
 	LessonID  int64          `json:"lessonID" gorm:"column:lesson_id"`
 	Content   string         `json:"content" gorm:"column:content;type:text"`
@@ -49,12 +49,13 @@ func (c Client) GetContent(ctx context.Context, contentID int64) (content Conten
 
 // GetAllContentByLessonID :
 func (c Client) GetAllContentByLessonID(ctx context.Context, lessonID int64) (contents []Content, err error) {
-	err = c.db.Table("content").Where("lesson_id = ?", lessonID).Find(&contents).Error
+	cts := []Content{}
+	err = c.db.Table("content").Where("lesson_id = ?", lessonID).Find(&cts).Error
 	if err != nil {
 		fmt.Println(err)
 		return nil, nil
 	}
-	return contents, nil
+	return cts, nil
 }
 
 // CreateContent :
