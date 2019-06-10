@@ -61,7 +61,7 @@ func TestConcept(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("TestGetConceptNotExist", func(t *testing.T) {
-		_, err := client.GetConcept(ctx, mockConcept.ConceptID, "es")
+		_, err := client.GetConcept(ctx, mockConcept.ConceptID)
 
 		assert := assert.New(t)
 
@@ -92,7 +92,7 @@ func TestConcept(t *testing.T) {
 	})
 
 	t.Run("TestGetConcept", func(t *testing.T) {
-		concept, err := client.GetConcept(ctx, mockConcept.ConceptID, "es")
+		concept, err := client.GetConcept(ctx, mockConcept.ConceptID)
 
 		if err != nil {
 			t.Error(err)
@@ -109,7 +109,7 @@ func TestConcept(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		concept, err := client.GetConcept(ctx, mockConcept.ConceptID, "en")
+		concept, err := client.GetConcept(ctx, mockConcept.ConceptID)
 
 		if err != nil {
 			t.Error(err)
