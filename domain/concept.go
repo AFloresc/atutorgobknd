@@ -27,7 +27,8 @@ func (c *Concept) TableName() string {
 
 // ConceptClient defines the interface to access ProfilesUser data
 type ConceptClient interface {
-	GetConcept(ctx context.Context, conceptID int64, language string) (concept Concept, err error)
+	GetConcept(ctx context.Context, conceptID int64) (concept *Concept, err error)
+	GetConceptsByLanguage(ctx context.Context, language string) (concepts []Concept, err error)
 	CreateConcept(ctx context.Context, concept *Concept) error
 	UpdateConcept(ctx context.Context, concept *Concept) error
 	GetConceptBySearch(ctx context.Context, search string) (concepts []Concept, err error)
@@ -37,15 +38,30 @@ type ConceptClient interface {
 // asserts Client implements the ConceptClient interface
 var _ ConceptClient = (*Client)(nil)
 
-// GetConcept :
-func (c Client) GetConcept(ctx context.Context, conceptID int64, language string) (concept Concept, err error) {
+// GetConcept : retrieves a concept
+func (c Client) GetConcept(ctx context.Context, conceptID int64) (concept *Concept, err error) {
 	conc := Concept{}
-	err = c.db.Table("concept").Where("ID = ? AND language = ?", conceptID, language).Find(&conc).Error
+	err = c.db.Table("concept").Where("ID = ?", conceptID).Find(&conc).Error
 	if err != nil {
 		fmt.Println(err)
-		return concept, nil
+		return
 	}
-	return conc, nil
+	return &conc, nil
+}
+
+// GetConceptsByLanguage : retrieves all the concepts in a language
+func (c Client) GetConceptsByLanguage(ctx context.Context, language string) (concepts []Concept, err error) {
+	concs := []Concept{}
+	if !utils.ValidateLanguage(language) {
+		fmt.Println(`{"error": "Unknown Language"`)
+		return concs, nil
+	}
+	err = c.db.Table("concept").Where("language = ?", language).Find(&concs).Error
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	return concs, nil
 }
 
 // CreateConcept : Creates a concept
@@ -61,7 +77,7 @@ func (c Client) GetConceptBySearch(ctx context.Context, search string) (concepts
 
 	err = c.db.Table("Concept").Select("id, title, description").Where("title LIKE ?", search).Find(&concepts).Error
 	if err != nil {
-		return nil, err
+		return
 	}
 	return concepts, nil
 
