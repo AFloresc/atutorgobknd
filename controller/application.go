@@ -55,6 +55,9 @@ func (ap *Application) InitializeRoutes(router *mux.Router) {
 	router.HandleFunc(baseRoute+"/courses/{courseid}", ap.GetCourse).Methods("GET")
 	router.HandleFunc(baseRoute+"/courses/{courseid}/statistics", ap.GetCourseStatistics).Methods("GET")
 
+	//User routes
+	router.HandleFunc(baseRoute+"/users/{courseid}", ap.GetUser).Methods("GET")
+
 	//Questionary routes
 	//TODO
 }
@@ -317,7 +320,12 @@ func (ap Application) GetCourse(w http.ResponseWriter, r *http.Request) {
 
 // GetCourseStatistics :
 func (ap Application) GetCourseStatistics(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
 
+// GetCourseStatistics :
+func (ap Application) GetUser(w http.ResponseWriter, r *http.Request) {
+	//TODO
 }
 
 func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
