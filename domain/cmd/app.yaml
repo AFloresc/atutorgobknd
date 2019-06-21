@@ -1,6 +1,5 @@
-application: atutor
-version: 1
-runtime: go
-api_version: 1
-threadsafe: true
 
+
+runtime: go111   
+env_variables:
+    CLOUDSQL_CONNECTION_NAME: INSTANCE_CONNECTION_NAME

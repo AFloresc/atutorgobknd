@@ -270,7 +270,7 @@ func (ap *Application) Initialize() {
 	if err != nil {
 		fmt.Println("Error parsing por. ", err.Error())
 	}
-	ap.Client.Initialize(os.Getenv("DATABASE_USER"), os.Getenv("DATABASE_PASS"), os.Getenv("DATABASE_IP"), port, os.Getenv("DATABASE_NAME"))
+	ap.Client.Initialize(os.Getenv("DATABASE_USER_DEV"), os.Getenv("DATABASE_PASS_DEV"), os.Getenv("DATABASE_IP_DEV"), port, os.Getenv("DATABASE_NAME_DEV"))
 }
 
 func loadConfiguration(filename string) (domain.Config, error) {
