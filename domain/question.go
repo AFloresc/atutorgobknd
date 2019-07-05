@@ -13,6 +13,11 @@ type Question struct {
 	QuestionID    int64          `json:"questionID" gorm:"column:questionID;primary_key"`
 	QuestionaryID int64          `json:"questionaryID" gorm:"column:questionaryID"`
 	Description   string         `json:"description" gorm:"column:description"`
+	Answer1       string         `json:"answer1" gorm:"column:answer1"`
+	Answer2       string         `json:"answer2" gorm:"column:answer2"`
+	Answer3       string         `json:"answer3" gorm:"column:answer3"`
+	Answer4       string         `json:"answer4" gorm:"column:answer4"`
+	GoodAnswer    int            `json:"goodanswer" gorm:"column:goodanswer"`
 	CreatedAt     mysql.NullTime `json:"created" gorm:"column:created"`
 	UpdatedAt     mysql.NullTime `json:"updated" gorm:"column:updated"`
 	DeletedAt     mysql.NullTime `json:"deleted" gorm:"column:deleted"` //Soft delete feature
