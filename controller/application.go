@@ -28,7 +28,7 @@ type Application struct {
 // InitializeRoutes : defines de endpoints routes and initializes them
 func (ap *Application) InitializeRoutes(router *mux.Router) {
 	baseRoute := "/api/1.0/atapi"
-	fmt.Println(baseRoute + "/test")
+	// fmt.Println(baseRoute + "/test")
 	//Signup handlers
 	router.HandleFunc(baseRoute+"/signup", ap.signup).Methods("POST")
 	//Signin handers
@@ -50,6 +50,7 @@ func (ap *Application) InitializeRoutes(router *mux.Router) {
 	router.HandleFunc(baseRoute+"/lessons/", ap.CreateLesson).Methods("POST")
 	router.HandleFunc(baseRoute+"/lessons/", ap.UpdateLesson).Methods("PUT")
 	router.HandleFunc(baseRoute+"/lessons/{lessonid}", ap.DeleteLesson).Methods("DELETE")
+	router.HandleFunc(baseRoute+"/lessons/{lessonid}/questionary", ap.GetQuestionary).Methods("GET")
 
 	//Course routes
 	router.HandleFunc(baseRoute+"/courses/{courseid}", ap.GetCourse).Methods("GET")
@@ -59,7 +60,11 @@ func (ap *Application) InitializeRoutes(router *mux.Router) {
 	router.HandleFunc(baseRoute+"/users/{courseid}", ap.GetUser).Methods("GET")
 
 	//Questionary routes
-	//TODO
+	router.HandleFunc(baseRoute+"/questionaries/{questionaryid}", ap.GetQuestionaryByID).Methods("GET")
+	router.HandleFunc(baseRoute+"/questionaries/", ap.CreateQuestionary).Methods("POST")
+	router.HandleFunc(baseRoute+"/questionaries/", ap.UpdateQuestionary).Methods("PUT")
+	router.HandleFunc(baseRoute+"/questionaries/{questionaryid}", ap.DeleteQuestionary).Methods("DELETE")
+
 }
 
 func (ap Application) signup(w http.ResponseWriter, r *http.Request) {
@@ -248,6 +253,26 @@ func (ap Application) GetLesson(w http.ResponseWriter, r *http.Request) {
 	ahttp.RespondWithJSON(w, http.StatusOK, lesson)
 }
 
+func (ap Application) GetQuestionary(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	var errorObject ahttp.Error
+	id, err := strconv.ParseInt(vars["lessonid"], 10, 0)
+	if err != nil {
+		errorObject.Message = "Invalid lesson ID"
+		ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+		return
+	}
+
+	questionary, err := ap.Client.GetQuestionaryByLessonID(r.Context(), id)
+	if err != nil {
+		errorObject.Message = err.Error()
+		ahttp.RespondWithError(w, http.StatusInternalServerError, errorObject)
+		return
+	}
+
+	ahttp.RespondWithJSON(w, http.StatusOK, questionary)
+}
+
 // GetAllLessonsByLanguage : retrieves all lesson by language
 func (ap Application) GetAllLessonsByLanguage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -405,7 +430,25 @@ func (ap *Application) Initialize() {
 	if err != nil {
 		fmt.Println("Error parsing por. ", err.Error())
 	}
-	ap.Client.Initialize(os.Getenv("DATABASE_USER"), os.Getenv("DATABASE_PASS"), os.Getenv("DATABASE_IP"), port, os.Getenv("DATABASE_NAME"))
+	env := os.Getenv("ATUTOR_ENV")
+	if env == "test" {
+		ap.Client.Initialize(os.Getenv("DATABASE_USER"), os.Getenv("DATABASE_PASS"), os.Getenv("DATABASE_IP"), port, os.Getenv("DATABASE_NAME"))
+	} else {
+		ap.Client.Initialize(os.Getenv("DATABASE_USER_DEV"), os.Getenv("DATABASE_PASS_DEV"), os.Getenv("DATABASE_IP_DEV"), port, os.Getenv("DATABASE_NAME_DEV"))
+	}
+}
+
+func (ap *Application) InitializeForTest() {
+	fmt.Println("Starting the application...")
+
+	fmt.Println(`    _   _____        _`)
+	fmt.Println(`   / \ |_   _|_   _ | |_  ___   _ __ `)
+	fmt.Println(`  / _ \  | | | | | || __|/ _ \ | '__|`)
+	fmt.Println(` / ___ \ | | | |_| || |_| (_) || |   `)
+	fmt.Println(`/_/   \_\|_|  \__,_| \__|\___/ |_|by Alex Flores`)
+
+	ap.Client.InitializeForTest("root", "Bautista21", "localhost", 3306, "atutor_dev")
+
 }
 
 func loadConfiguration(filename string) (domain.Config, error) {
@@ -438,4 +481,36 @@ func GenerateToken(user domain.User) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+/* Questionary routes */
+
+// GetQuestionaryByID :
+func (ap Application) GetQuestionaryByID(w http.ResponseWriter, r *http.Request) {
+	//TODO
+	ahttp.RespondWithJSON(w, http.StatusOK, "Access forbiden")
+}
+
+// CreateQuestionary :
+func (ap Application) CreateQuestionary(w http.ResponseWriter, r *http.Request) {
+	//TODO
+	var errorObject ahttp.Error
+	errorObject.Message = "Access forbiden."
+	ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+}
+
+// UpdateQuestionary :
+func (ap Application) UpdateQuestionary(w http.ResponseWriter, r *http.Request) {
+	//TODO
+	var errorObject ahttp.Error
+	errorObject.Message = "Access forbiden."
+	ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+}
+
+// DeleteQuestionary :
+func (ap Application) DeleteQuestionary(w http.ResponseWriter, r *http.Request) {
+	//TODO
+	var errorObject ahttp.Error
+	errorObject.Message = "Access forbiden."
+	ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
 }
