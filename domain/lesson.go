@@ -47,18 +47,40 @@ func (c Client) GetLesson(ctx context.Context, lessonID int64) (lesson *Lesson, 
 	err = c.db.Table("lesson").Where("lessonID = ?", lessonID).Find(&ls).Error
 	if err != nil {
 		fmt.Println(err)
-		return nil, nil
+		return nil, err
 	}
 	contents, err := c.GetAllContentByLessonID(ctx, ls.LessonID)
 	if err != nil {
 		fmt.Println(err)
-		return nil, nil
+		return nil, err
 	}
 	for _, content := range contents {
 		ls.Contents = append(ls.Contents, content)
 	}
+
+	//Get questionary
+	questionary, err := c.GetQuestionaryByLessonID(ctx, ls.LessonID)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	ls.Questionary = questionary
+
+	// //Get questionaty's questions
+	// questions, err := c.GetQuestionsByQuestionaryID(ctx, questionary.QuestionaryID)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return nil, err
+	// }
+	// for _, question := range questions {
+	// 	ls.Questionary.Questions = append(ls.Questionary.Questions, question)
+	//}
+
 	return &ls, nil
 }
+
+// CreateLesson :
 func (c Client) CreateLesson(ctx context.Context, lesson *Lesson) error {
 	err := c.db.Create(&lesson).Error
 	if err != nil {
@@ -66,6 +88,8 @@ func (c Client) CreateLesson(ctx context.Context, lesson *Lesson) error {
 	}
 	return nil
 }
+
+// UpdateLesson :
 func (c Client) UpdateLesson(ctx context.Context, lesson *Lesson) error {
 	err := c.db.Save(&lesson).Error
 	if err != nil {
@@ -73,6 +97,8 @@ func (c Client) UpdateLesson(ctx context.Context, lesson *Lesson) error {
 	}
 	return nil
 }
+
+// DeleteLesson :
 func (c Client) DeleteLesson(ctx context.Context, lessonID int64) error {
 	if lessonID == 0 {
 		return fmt.Errorf("Error!!! (DeleteLesson), incorrect Lesson ID: %d", lessonID)
@@ -85,13 +111,14 @@ func (c Client) DeleteLesson(ctx context.Context, lessonID int64) error {
 
 }
 
+// GetAllLessonsByCourseID :
 func (c Client) GetAllLessonsByCourseID(ctx context.Context, courseID int64) (lessons []Lesson, err error) {
 
 	ls := []Lesson{}
-	err = c.db.Table("lessons").Where("courseID = ?", courseID).Find(&ls).Error
+	err = c.db.Table("lesson").Where("courseID = ?", courseID).Find(&ls).Error
 	if err != nil {
 		fmt.Println(err)
-		return nil, nil
+		return nil, err
 	}
 	for index, lesson := range ls {
 		contents, err := c.GetAllContentByLessonID(ctx, lesson.LessonID)
@@ -102,7 +129,26 @@ func (c Client) GetAllLessonsByCourseID(ctx context.Context, courseID int64) (le
 		for _, content := range contents {
 			ls[index].Contents = append(ls[index].Contents, content)
 		}
+		//Get questionary
+		questionary, err := c.GetQuestionaryByLessonID(ctx, lesson.LessonID)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		lesson.Questionary = questionary
+
+		//Get questionaty's questions
+		// questions, err := c.GetQuestionsByQuestionaryID(ctx, questionary.QuestionaryID)
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	return nil, err
+		// }
+		// for _, question := range questions {
+		// 	lesson.Questionary.Questions = append(lesson.Questionary.Questions, question)
+		// }
 	}
+
 	return ls, nil
 }
 
@@ -131,6 +177,7 @@ func (c Client) GetLessonsByLanguage(ctx context.Context, language string) (less
 	return lessns, nil
 }
 
+// hardDeleteLesson :
 func (c Client) hardDeleteLesson(ctx context.Context, lessonID int64) error {
 	if lessonID != 0 {
 		return c.db.Exec("DELETE FROM lessons WHERE lessonID=? ", lessonID).Error
