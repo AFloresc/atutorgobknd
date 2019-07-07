@@ -38,18 +38,20 @@ type UserClient interface {
 	GetUserByPassword(ctx context.Context, userID int64) (user User, err error)
 	CreateUser(ctx context.Context, user *User) error
 	GetUserByEmail(ctx context.Context, email string) (user User, err error)
+	GetUserByID(ctx context.Context, userID int64) (user User, err error)
 }
 
 // asserts Client implements the UserProfilesClient interface
 var _ UserClient = (*Client)(nil)
 
-// Creates a User into database
+// CreateUser : a User into database
 func (s Client) CreateUser(ctx context.Context, user *User) error {
 	return s.db.Create(user).Error
 }
 
+// GetUserByPassword :
 func (s Client) GetUserByPassword(ctx context.Context, userID int64) (user User, err error) {
-	err = s.db.Where("user_id = ?", userID).Find(&user).Error
+	err = s.db.Where("id = ?", userID).Find(&user).Error
 	if err != nil {
 		return
 	}
@@ -63,6 +65,23 @@ func (s Client) GetUserByPassword(ctx context.Context, userID int64) (user User,
 	return
 }
 
+// GetUserByID :
+func (s Client) GetUserByID(ctx context.Context, userID int64) (user User, err error) {
+	err = s.db.Where("id = ?", userID).Find(&user).Error
+	if err != nil {
+		return
+	}
+	marks, err := s.GetAllMarksByUser(ctx, userID)
+	if err != nil {
+		return
+	}
+	for _, mark := range marks {
+		user.Marks = append(user.Marks, mark.Value)
+	}
+	return
+}
+
+// GetUserByEmail :
 func (s Client) GetUserByEmail(ctx context.Context, email string) (user User, err error) {
 
 	err = s.db.Where("email = ?", email).Find(&user).Error
