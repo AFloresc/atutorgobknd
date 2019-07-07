@@ -38,7 +38,7 @@ var _ QuestionaryClient = (*Client)(nil)
 // GetQuestionary :
 func (c Client) GetQuestionary(ctx context.Context, questionaryID int64) (questionary Questionary, err error) {
 	q := Questionary{}
-	err = c.db.Table("Questionary").Where("QuestionaryID = ?", questionaryID).Find(&q).Error
+	err = c.db.Table("questionary").Where("QuestionaryID = ?", questionaryID).Find(&q).Error
 	if err != nil {
 		fmt.Println(err)
 		return q, nil
@@ -59,7 +59,7 @@ func (c Client) GetQuestionary(ctx context.Context, questionaryID int64) (questi
 // GetQuestionaryByLessonID :
 func (c Client) GetQuestionaryByLessonID(ctx context.Context, LessonID int64) (questionary Questionary, err error) {
 	q := Questionary{}
-	err = c.db.Table("Questionary").Where("LessonID = ?", LessonID).Find(&q).Error
+	err = c.db.Table("questionary").Where("LessonID = ?", LessonID).Find(&q).Error
 	if err != nil {
 		fmt.Println(err)
 		return q, nil
