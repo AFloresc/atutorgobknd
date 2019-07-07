@@ -58,12 +58,17 @@ func (ap *Application) InitializeRoutes(router *mux.Router) {
 
 	//User routes
 	router.HandleFunc(baseRoute+"/users/{courseid}", ap.GetUser).Methods("GET")
+	router.HandleFunc(baseRoute+"/users/{userid}", ap.GetUserByID).Methods("GET")
 
 	//Questionary routes
 	router.HandleFunc(baseRoute+"/questionaries/{questionaryid}", ap.GetQuestionaryByID).Methods("GET")
 	router.HandleFunc(baseRoute+"/questionaries/", ap.CreateQuestionary).Methods("POST")
 	router.HandleFunc(baseRoute+"/questionaries/", ap.UpdateQuestionary).Methods("PUT")
 	router.HandleFunc(baseRoute+"/questionaries/{questionaryid}", ap.DeleteQuestionary).Methods("DELETE")
+
+	//Mark routes
+	router.HandleFunc(baseRoute+"/user/{userid}/mark", ap.GetUserMarks).Methods("GET")
+	router.HandleFunc(baseRoute+"/user/mark", ap.CreateUserMark).Methods("POST")
 
 }
 
@@ -309,6 +314,64 @@ func (ap Application) DeleteLesson(w http.ResponseWriter, r *http.Request) {
 	//TODO
 }
 
+// GetUserMarks :
+func (ap Application) GetUserMarks(w http.ResponseWriter, r *http.Request) {
+	//TODO
+}
+
+// CreateUserMark :
+func (ap Application) CreateUserMark(w http.ResponseWriter, r *http.Request) {
+	var errorObject ahttp.Error
+
+	var mark domain.Mark
+	decoder := json.NewDecoder(r.Body)
+
+	if err := decoder.Decode(&mark); err != nil {
+		fmt.Println(err)
+		errorObject.Message = "Invalid request payload."
+		ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+		return
+	}
+	defer r.Body.Close()
+
+	//get actual mark
+	//if better delete and create
+	//else do nothing
+	actualMark, err := ap.Client.GetMarkByQuestionary(r.Context(), mark.UserID, mark.QuestionaryID)
+	if err != nil {
+		errorObject.Message = err.Error()
+		ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+		return
+	}
+
+	if actualMark.Value != 0 { //there¡s mark
+		if actualMark.Value < mark.Value { //if mak is better delete it and create the better one
+			err = ap.Client.DeleteMark(r.Context(), mark.UserID, mark.QuestionaryID)
+			if err != nil {
+				errorObject.Message = err.Error()
+				ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+				return
+			}
+			if err := ap.Client.CreateMark(r.Context(), &mark); err != nil {
+				errorObject.Message = err.Error()
+				ahttp.RespondWithError(w, http.StatusInternalServerError, errorObject)
+				return
+			}
+			ahttp.RespondWithJSON(w, http.StatusOK, mark)
+		}
+		//No need to create keep the actual better value
+		ahttp.RespondWithJSON(w, http.StatusOK, actualMark)
+	}
+	//else there's no mark
+	if err := ap.Client.CreateMark(r.Context(), &mark); err != nil {
+		errorObject.Message = err.Error()
+		ahttp.RespondWithError(w, http.StatusInternalServerError, errorObject)
+		return
+	}
+	ahttp.RespondWithJSON(w, http.StatusOK, mark)
+}
+
+// TestEndpoint :
 func TestEndpoint(w http.ResponseWriter, req *http.Request) {
 	token := context.Get(req, "user")
 	var user domain.User
@@ -348,11 +411,34 @@ func (ap Application) GetCourseStatistics(w http.ResponseWriter, r *http.Request
 	// TODO
 }
 
-// GetCourseStatistics :
+// GetUser :
 func (ap Application) GetUser(w http.ResponseWriter, r *http.Request) {
 	//TODO
 }
 
+// GetUserByID :
+func (ap Application) GetUserByID(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	var errorObject ahttp.Error
+	id, err := strconv.ParseInt(vars["userid"], 10, 0)
+	if err != nil {
+		errorObject.Message = "Invalid user ID"
+		ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+		return
+	}
+
+	user, err := ap.Client.GetUserByID(r.Context(), id)
+	if err != nil {
+		errorObject.Message = err.Error()
+		ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+		return
+	}
+	user.Password = ""
+	ahttp.RespondWithJSON(w, http.StatusOK, user)
+}
+
+// TokenVerifyMiddleWare :
 func TokenVerifyMiddleWare(next http.HandlerFunc) http.HandlerFunc {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -448,6 +534,19 @@ func (ap *Application) InitializeForTest() {
 	fmt.Println(`/_/   \_\|_|  \__,_| \__|\___/ |_|by Alex Flores`)
 
 	ap.Client.InitializeForTest("root", "Bautista21", "localhost", 3306, "atutor_dev")
+
+}
+
+func (ap *Application) InitializeForTestDev() {
+	fmt.Println("Starting the application...")
+
+	fmt.Println(`    _   _____        _`)
+	fmt.Println(`   / \ |_   _|_   _ | |_  ___   _ __ `)
+	fmt.Println(`  / _ \  | | | | | || __|/ _ \ | '__|`)
+	fmt.Println(` / ___ \ | | | |_| || |_| (_) || |   `)
+	fmt.Println(`/_/   \_\|_|  \__,_| \__|\___/ |_|by Alex Flores`)
+
+	ap.Client.InitializeForTestDev("root", "a1234", "35.205.235.6", 3306, "atutor_dev")
 
 }
 
