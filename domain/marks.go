@@ -26,6 +26,7 @@ func (m *Mark) TableName() string {
 type MarkClient interface {
 	GetMark(ctx context.Context, userID int64, quetionaryID int64) (mark Mark, err error)
 	GetMarkByLesson(ctx context.Context, userID int64, lessonID int64) (mark Mark, err error)
+	GetMarkByQuestionary(ctx context.Context, userID int64, questionaryID int64) (mark Mark, err error)
 	GetAllMarksByUser(ctx context.Context, userID int64) (marks []Mark, err error)
 	GetAllMarks(ctx context.Context, courseID int64, language string) (marks []Mark, err error)
 	GetAllMarksByLesson(ctx context.Context, lessonID Lesson) (marks []Mark, err error)
@@ -56,7 +57,18 @@ func (c *Client) GetMarkByLesson(ctx context.Context, userID int64, lessonID int
 
 	mk := Mark{}
 
-	err = c.db.Table("mark").Where("userID = ? AND lessonID = ?", userID, q.QuestionaryID).Find(&mk).Error
+	err = c.db.Table("mark").Where("userID = ? AND questionaryID = ?", userID, q.QuestionaryID).Find(&mk).Error
+	if err != nil {
+		fmt.Println(err)
+	}
+	return mk, nil
+}
+
+// GetMarkByQuestionary :
+func (c *Client) GetMarkByQuestionary(ctx context.Context, userID int64, questionaryID int64) (mark Mark, err error) {
+	mk := Mark{}
+
+	err = c.db.Table("mark").Where("userID = ? AND questionaryID = ?", userID, questionaryID).Find(&mk).Error
 	if err != nil {
 		fmt.Println(err)
 	}
