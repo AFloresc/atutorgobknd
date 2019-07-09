@@ -60,7 +60,7 @@ func (s Client) GetUserByPassword(ctx context.Context, userID int64) (user User,
 		return
 	}
 	for _, mark := range marks {
-		user.Marks = append(user.Marks, mark.Value)
+		user.Marks = append(user.Marks, mark.Val)
 	}
 	return
 }
@@ -76,7 +76,7 @@ func (s Client) GetUserByID(ctx context.Context, userID int64) (user User, err e
 		return
 	}
 	for _, mark := range marks {
-		user.Marks = append(user.Marks, mark.Value)
+		user.Marks = append(user.Marks, mark.Val)
 	}
 	return
 }
