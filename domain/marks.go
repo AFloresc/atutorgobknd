@@ -9,9 +9,10 @@ import (
 
 //Mark : represent every mark of a Test done by Users
 type Mark struct {
+	MarkID        int64          `json:"markID" gorm:"column:markID;primary_key"`
 	UserID        int64          `json:"userID" gorm:"column:userID;"`
 	QuestionaryID int64          `json:"questionaryID" gorm:"column:questionaryID;"`
-	Value         int            `json:"val" gorm:"column:val"`
+	Val           int            `json:"val" gorm:"column:val"`
 	CreatedAt     mysql.NullTime `json:"created" gorm:"column:created"`
 	UpdatedAt     mysql.NullTime `json:"updated" gorm:"column:updated"`
 	DeletedAt     mysql.NullTime `json:"deleted" gorm:"column:deleted"` //Soft delete feature
@@ -41,7 +42,7 @@ var _ MarkClient = (*Client)(nil)
 // GetMark :
 func (c *Client) GetMark(ctx context.Context, userID int64, quetionaryID int64) (mark Mark, err error) {
 	mk := Mark{}
-	err = c.db.Table("mark").Where("userID = ? AND quetionaryID = ?", userID, quetionaryID).Find(&mk).Error
+	err = c.db.Table("mark").Where("userID = ? AND questionaryID = ?", userID, quetionaryID).Find(&mk).Error
 	if err != nil {
 		fmt.Println(err)
 	}
