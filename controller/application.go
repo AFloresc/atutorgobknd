@@ -344,31 +344,27 @@ func (ap Application) CreateUserMark(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if actualMark.Value != 0 { //there¡s mark
-		if actualMark.Value < mark.Value { //if mak is better delete it and create the better one
-			err = ap.Client.DeleteMark(r.Context(), mark.UserID, mark.QuestionaryID)
+	if actualMark.MarkID == 0 {
+		err := ap.Client.CreateMark(r.Context(), &mark)
+		if err != nil {
+			errorObject.Message = err.Error()
+			ahttp.RespondWithError(w, http.StatusInternalServerError, errorObject)
+			return
+		}
+	} else { //Mark exists
+		if actualMark.Val < mark.Val {
+			//update mark
+			actualMark.Val = mark.Val
+			err := ap.Client.UpdateMark(r.Context(), &actualMark)
 			if err != nil {
-				errorObject.Message = err.Error()
-				ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
-				return
-			}
-			if err := ap.Client.CreateMark(r.Context(), &mark); err != nil {
 				errorObject.Message = err.Error()
 				ahttp.RespondWithError(w, http.StatusInternalServerError, errorObject)
 				return
 			}
-			ahttp.RespondWithJSON(w, http.StatusOK, mark)
 		}
-		//No need to create keep the actual better value
-		ahttp.RespondWithJSON(w, http.StatusOK, actualMark)
+
 	}
-	//else there's no mark
-	if err := ap.Client.CreateMark(r.Context(), &mark); err != nil {
-		errorObject.Message = err.Error()
-		ahttp.RespondWithError(w, http.StatusInternalServerError, errorObject)
-		return
-	}
-	ahttp.RespondWithJSON(w, http.StatusOK, mark)
+	ahttp.RespondWithJSON(w, http.StatusOK, actualMark)
 }
 
 // TestEndpoint :

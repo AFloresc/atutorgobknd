@@ -1,6 +1,10 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -384,6 +388,50 @@ func TestApplicationHandlersDev(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		assert := assert.New(t)
+		assert.Equal(http.StatusOK, res.StatusCode)
+	})
+
+	t.Run("TestPostMark", func(t *testing.T) {
+
+		mockMark := domain.Mark{
+			UserID:        int64(1),
+			QuestionaryID: int64(1),
+			Value:         6,
+		}
+
+		mark, err := json.Marshal(mockMark)
+		if err != nil {
+			log.Fatal(err)
+		}
+		payload := []byte(string(mark))
+
+		baseRoute := "/api/1.0/atapi"
+
+		path := baseRoute + "/user/mark"
+		req, err := http.NewRequest("POST", ts.URL+path, bytes.NewBuffer(payload))
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+
+		res, err := httpclient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		body, err := ioutil.ReadAll(res.Body)
+		res.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var m = &domain.Mark{}
+		err = json.Unmarshal(body, &m)
+		if err != nil {
+			fmt.Println("ERROOOR!", err.Error())
+		}
+		fmt.Println("CREATE MARK =====> ", m)
 
 		assert := assert.New(t)
 		assert.Equal(http.StatusOK, res.StatusCode)
