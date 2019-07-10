@@ -9,7 +9,7 @@ import (
 
 //Mark : represent every mark of a Test done by Users
 type Mark struct {
-	MarkID        int64          `json:"markID" gorm:"column:markID"`
+	MarkID        int64          `json:"markID" gorm:"column:markID;primary_key"`
 	UserID        int64          `json:"userID" gorm:"column:userID"`
 	QuestionaryID int64          `json:"questionaryID" gorm:"column:questionaryID"`
 	Val           int            `json:"val" gorm:"column:val"`
