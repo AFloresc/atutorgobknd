@@ -406,7 +406,19 @@ func (ap Application) GetCourse(w http.ResponseWriter, r *http.Request) {
 
 // GetCourseStatistics :
 func (ap Application) GetCourseStatistics(w http.ResponseWriter, r *http.Request) {
-	// TODO
+
+	vars := mux.Vars(r)
+	var errorObject ahttp.Error
+	id, err := strconv.ParseInt(vars["courseid"], 10, 0)
+	if err != nil {
+		errorObject.Message = "Invalid user ID"
+		ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
+		return
+	}
+
+	report, err := ap.Client.GenerateReport(r.Context(), id)
+
+	ahttp.RespondWithJSON(w, http.StatusOK, report)
 }
 
 // GetUser :
