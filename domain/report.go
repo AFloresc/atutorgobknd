@@ -10,7 +10,7 @@ type Report struct {
 	CourseID          int64    `json:"courseID"`
 	CourseTitle       string   `json:"courseTitlee"`
 	NumberUsers       int      `json:"numberUsers"`
-	LessonsReaded     string   `json:"lessonsReaded"`
+	LessonsReaded     int      `json:"lessonsReaded"`
 	MaxMark           int      `json:"maxMark"`
 	MinMark           int      `json:"minMark"`
 	AvgMark           float64  `json:"avgMark"`
@@ -40,6 +40,7 @@ func (c Client) GenerateReport(ctx context.Context, courseID int64) (report *Rep
 	report.MinMark = 2
 	report.AvgMark = 7.5
 	report.NumberUsers = 125
+	report.LessonsReaded = 500
 
 	lessons, err := c.GetAllLessonsByCourseID(ctx, courseID)
 	if err != nil {
