@@ -44,21 +44,22 @@ func (c Client) GenerateReport(ctx context.Context, courseID int64) (report *Rep
 	r.NumberUsers = 125
 	r.LessonsReaded = 500
 
-	lessons, err := c.GetAllLessonsByCourseID(ctx, courseID)
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil, err
-	}
+	// lessons, err := c.GetAllLessonsByCourseID(ctx, courseID)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	return nil, err
+	// }
 	//Get five random lessons
 	//rand := rand.Intn(len(lessons)-1) + 1
-	for index, lesson := range lessons {
-		if index < 5 {
-			r.MostViewedLessons = append(r.MostViewedLessons, lesson)
-		}
-	}
+	// for index, lesson := range lessons {
+	// 	if index < 5 {
+	// 		r.MostViewedLessons = append(r.MostViewedLessons, lesson)
+	// 	}
+	// }
 	r.MostSearched = []string{"Permisos", "FullScreen", "Activity", "Gradle", "AsyncTask"}
 
 	mockLesson := Lesson{
+		LessonID: int64(1),
 		CourseID: int64(1),
 		Title:    "Instalación de las herramientas necesarias",
 		Text:     "Descarga de las herramientas necesarias para seguir el curso.",
@@ -68,6 +69,7 @@ func (c Client) GenerateReport(ctx context.Context, courseID int64) (report *Rep
 	}
 
 	mockLesson2 := Lesson{
+		LessonID: int64(2),
 		CourseID: int64(1),
 		Title:    "El primer proyecto Android",
 		Text:     "Como crear nuestro primer proyecto Android.",
@@ -77,6 +79,7 @@ func (c Client) GenerateReport(ctx context.Context, courseID int64) (report *Rep
 	}
 
 	mockLesson3 := Lesson{
+		LessonID: int64(3),
 		CourseID: int64(1),
 		Title:    "Capturar el click de un botón",
 		Text:     "Como utilizar buttons en Android",
@@ -86,6 +89,7 @@ func (c Client) GenerateReport(ctx context.Context, courseID int64) (report *Rep
 	}
 
 	mockLesson4 := Lesson{
+		LessonID: int64(4),
 		CourseID: int64(1),
 		Title:    "Los controles RadioGroup y RadioButton",
 		Text:     "Como utilizar RadioGroups y Radiobuttons en Android",
@@ -95,6 +99,7 @@ func (c Client) GenerateReport(ctx context.Context, courseID int64) (report *Rep
 	}
 
 	mockLesson5 := Lesson{
+		LessonID: int64(5),
 		CourseID: int64(1),
 		Title:    "Control CheckBox",
 		Text:     "Como utilizar CheckBoxes en Android",
