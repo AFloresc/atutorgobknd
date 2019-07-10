@@ -25,6 +25,8 @@ type Application struct {
 	Client *domain.Client
 }
 
+const validToken string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFsZXhAYWxleC5jb20iLCJpc3MiOiJBVHV0b3JDb3Vyc2UiLCJyb2xlIjoibG9naW4ifQ.Px9EuhHFACyMt80JhzWPOdkwjd_zPjNNNIZUgpDlt7A"
+
 // InitializeRoutes : defines de endpoints routes and initializes them
 func (ap *Application) InitializeRoutes(router *mux.Router) {
 	baseRoute := "/api/1.0/atapi"
@@ -57,7 +59,7 @@ func (ap *Application) InitializeRoutes(router *mux.Router) {
 	router.HandleFunc(baseRoute+"/courses/{courseid}/statistics", ap.GetCourseStatistics).Methods("GET")
 
 	//User routes
-	router.HandleFunc(baseRoute+"/users/{courseid}", ap.GetUser).Methods("GET")
+	router.HandleFunc(baseRoute+"/users/courses/{courseid}", ap.GetUser).Methods("GET")
 	router.HandleFunc(baseRoute+"/users/{userid}", ap.GetUserByID).Methods("GET")
 
 	//Questionary routes
@@ -430,6 +432,7 @@ func (ap Application) GetUserByID(w http.ResponseWriter, r *http.Request) {
 		ahttp.RespondWithError(w, http.StatusBadRequest, errorObject)
 		return
 	}
+
 	user.Password = ""
 	ahttp.RespondWithJSON(w, http.StatusOK, user)
 }
@@ -577,6 +580,10 @@ func GenerateToken(user domain.User) (string, error) {
 
 	return tokenString, nil
 }
+
+// func verifyToken(token string) error {
+// 	//"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFsZXhAYWxleC5jb20iLCJpc3MiOiJBVHV0b3JDb3Vyc2UiLCJyb2xlIjoibG9naW4ifQ.Px9EuhHFACyMt80JhzWPOdkwjd_zPjNNNIZUgpDlt7A"
+// }
 
 /* Questionary routes */
 
