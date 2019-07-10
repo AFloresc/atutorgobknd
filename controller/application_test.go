@@ -210,7 +210,7 @@ func TestApplicationHandlersDev(t *testing.T) {
 		Client: &domain.Client{},
 	}
 
-	app.InitializeForTestDev()
+	app.InitializeForTest()
 	err := app.Client.AutoMigrate()
 	if err != nil {
 		log.Fatal(err)
@@ -393,12 +393,33 @@ func TestApplicationHandlersDev(t *testing.T) {
 		assert.Equal(http.StatusOK, res.StatusCode)
 	})
 
+	t.Run("TestGetStatistics", func(t *testing.T) {
+		baseRoute := "/api/1.0/atapi"
+		n := int64(1)
+		courseid := strconv.FormatInt(n, 10)
+		// /courses/{courseid}/statistics
+
+		path := baseRoute + "/courses/" + courseid + "/statistics"
+		req, err := http.NewRequest("GET", ts.URL+path, nil)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+
+		res, err := httpclient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert := assert.New(t)
+		assert.Equal(http.StatusOK, res.StatusCode)
+	})
+
 	t.Run("TestPostMark", func(t *testing.T) {
 
 		mockMark := domain.Mark{
 			UserID:        int64(1),
 			QuestionaryID: int64(1),
-			Value:         6,
+			Val:           9,
 		}
 
 		mark, err := json.Marshal(mockMark)
@@ -432,6 +453,40 @@ func TestApplicationHandlersDev(t *testing.T) {
 			fmt.Println("ERROOOR!", err.Error())
 		}
 		fmt.Println("CREATE MARK =====> ", m)
+
+		assert := assert.New(t)
+		assert.Equal(http.StatusOK, res.StatusCode)
+	})
+
+	t.Run("TestGeUserByID", func(t *testing.T) {
+		baseRoute := "/api/1.0/atapi"
+		n := int64(3)
+		userid := strconv.FormatInt(n, 10)
+
+		path := baseRoute + "/users/" + userid
+		req, err := http.NewRequest("GET", ts.URL+path, nil)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+		fmt.Println("URL: ", ts.URL+path)
+
+		res, err := httpclient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		body, err := ioutil.ReadAll(res.Body)
+		res.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var m = &domain.User{}
+		err = json.Unmarshal(body, &m)
+		if err != nil {
+			fmt.Println("ERROOOR!", err.Error())
+		}
+		fmt.Println("USER =====> ", m)
 
 		assert := assert.New(t)
 		assert.Equal(http.StatusOK, res.StatusCode)

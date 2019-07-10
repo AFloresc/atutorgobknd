@@ -27,7 +27,9 @@ var _ ReportClient = (*Client)(nil)
 
 // GenerateReport : Generates a course report
 func (c Client) GenerateReport(ctx context.Context, courseID int64) (report *Report, err error) {
-	report.CourseID = courseID
+
+	r := Report{}
+	r.CourseID = courseID
 
 	course, err := c.GetCourse(ctx, courseID)
 	if err != nil {
@@ -35,12 +37,12 @@ func (c Client) GenerateReport(ctx context.Context, courseID int64) (report *Rep
 		return nil, err
 	}
 
-	report.CourseTitle = course.Name
-	report.MaxMark = 10
-	report.MinMark = 2
-	report.AvgMark = 7.5
-	report.NumberUsers = 125
-	report.LessonsReaded = 500
+	r.CourseTitle = course.Name
+	r.MaxMark = 10
+	r.MinMark = 2
+	r.AvgMark = 7.5
+	r.NumberUsers = 125
+	r.LessonsReaded = 500
 
 	lessons, err := c.GetAllLessonsByCourseID(ctx, courseID)
 	if err != nil {
@@ -51,10 +53,10 @@ func (c Client) GenerateReport(ctx context.Context, courseID int64) (report *Rep
 	//rand := rand.Intn(len(lessons)-1) + 1
 	for index, lesson := range lessons {
 		if index < 5 {
-			report.MostViewedLessons = append(report.MostViewedLessons, lesson)
+			r.MostViewedLessons = append(r.MostViewedLessons, lesson)
 		}
 	}
-	report.MostSearched = []string{"Permisos", "FullScreen", "Activity", "Gradle", "AsyncTask"}
+	r.MostSearched = []string{"Permisos", "FullScreen", "Activity", "Gradle", "AsyncTask"}
 
 	mockLesson := Lesson{
 		CourseID: int64(1),
@@ -101,11 +103,11 @@ func (c Client) GenerateReport(ctx context.Context, courseID int64) (report *Rep
 		Position: 4,
 	}
 
-	report.MostViewedLessons = append(report.MostViewedLessons, mockLesson)
-	report.MostViewedLessons = append(report.MostViewedLessons, mockLesson2)
-	report.MostViewedLessons = append(report.MostViewedLessons, mockLesson3)
-	report.MostViewedLessons = append(report.MostViewedLessons, mockLesson4)
-	report.MostViewedLessons = append(report.MostViewedLessons, mockLesson5)
+	r.MostViewedLessons = append(r.MostViewedLessons, mockLesson)
+	r.MostViewedLessons = append(r.MostViewedLessons, mockLesson2)
+	r.MostViewedLessons = append(r.MostViewedLessons, mockLesson3)
+	r.MostViewedLessons = append(r.MostViewedLessons, mockLesson4)
+	r.MostViewedLessons = append(r.MostViewedLessons, mockLesson5)
 
-	return report, nil
+	return &r, nil
 }
