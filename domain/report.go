@@ -8,14 +8,14 @@ import (
 //Report represent every the statistics report
 type Report struct {
 	CourseID          int64    `json:"courseID"`
-	CourseTitle       string   `json:"courseTitlee"`
+	CourseTitle       string   `json:"courseTitle"`
 	NumberUsers       int      `json:"numberUsers"`
-	LessonsReaded     int      `json:"lessonsReaded"`
+	LessonsRead       int      `json:"lessonsRead"`
 	MaxMark           int      `json:"maxMark"`
 	MinMark           int      `json:"minMark"`
 	AvgMark           float64  `json:"avgMark"`
 	MostSearched      []string `json:"mostSearched"`
-	MostViewedLessons []Lesson `json:"lessons" gorm:"column:created"`
+	MostViewedLessons []Lesson `json:"lessons"`
 }
 
 type ReportClient interface {
@@ -42,7 +42,7 @@ func (c Client) GenerateReport(ctx context.Context, courseID int64) (report *Rep
 	r.MinMark = 2
 	r.AvgMark = 7.5
 	r.NumberUsers = 125
-	r.LessonsReaded = 500
+	r.LessonsRead = 500
 
 	// lessons, err := c.GetAllLessonsByCourseID(ctx, courseID)
 	// if err != nil {
